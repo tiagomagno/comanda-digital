@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Noticia {
+  id              Int       @id @default(autoincrement())
+  titulo          String
+  subtitulo       String?
+  conteudo        String
+  slug            String    @unique
+  imagemDestaque  String?
+  status          String    @default("draft")
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  editoriaId      Int
+  autorId         Int
+  createdById     Int?
+  
+  destaqueOrdem   Int?
+  metaDescription String?
+  metaKeywords    String?
+  metaTitle       String?
+  
+  editoria        Editoria  @relation(fields: [editoriaId], references: [id])
+  autor           Autor     @relation(fields: [autorId], references: [id])
+  createdBy       User?     @relation(fields: [createdById], references: [id])
+
+  @@index([status])
+  @@index([slug])
+  @@index([updatedAt])
+  @@index([editoriaId])
+  @@index([autorId])
+  @@index([publishedAt])
+}
+
+model Editoria {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  slug      String    @unique
+  noticias  Noticia[]
+}
+
+model Autor {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  avatar    String?
+  bio       String?
+  email     String?
+  noticias  Noticia[]
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  nome         String
+  role         String    @default("editor")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  noticias     Noticia[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Publicidade {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  posicao   String
+  imagem    String
+  link      String?
+  ativo     Boolean  @default(true)
+}
+
+model Media {
+  id             Int      @id @default(autoincrement())
+  filename       String
+  path           String
+  mimeType       String
+  size           Int
+  createdAt      DateTime @default(now())
+  uploadedById   Int?
+}

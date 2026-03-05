@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Notícias 360 - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#003380",
+                        secondary: "#E30613",
+                        "background-light": "#F8FAFC",
+                        "background-dark": "#0F172A",
+                        "surface-light": "rgba(255, 255, 255, 0.7)",
+                        "surface-dark": "rgba(30, 41, 59, 0.7)",
+                        "text-light": "#334155",
+                        "text-dark": "#F8FAFC",
+                        "text-muted-light": "#94A3B8",
+                        "text-muted-dark": "#64748B",
+                        "border-light": "rgba(226, 232, 240, 0.6)",
+                        "border-dark": "rgba(51, 65, 85, 0.6)"
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                        fulga: ["Inter", "sans-serif"] // Placeholder for Fulga
+                    },
+                    letterSpacing: {
+                        widest: '.15em',
+                        wider: '.05em',
+                    },
+                    borderRadius: {
+                        DEFAULT: "1rem",
+                        'xl': "1.5rem",
+                        '2xl': "2rem"
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(0, 51, 128, 0.15)',
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        }
+        .dark body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .glass-panel {
+            background: var(--tw-colors-surface-light);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--tw-colors-border-light);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+        .dark .glass-panel {
+            background: var(--tw-colors-surface-dark);
+            border-color: var(--tw-colors-border-dark);
+        }
+    </style>
+</head>
+<body class="text-text-light dark:text-text-dark min-h-screen flex antialiased transition-colors duration-200">
+<aside class="w-20 lg:w-64 glass-panel flex flex-col h-screen fixed left-0 top-0 transition-all duration-300 z-50">
+<div class="h-24 flex items-center justify-center lg:justify-start px-0 lg:px-8 border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-2 text-primary dark:text-white font-bold text-xl lg:text-2xl tracking-widest font-fulga">
+<span class="text-secondary lg:hidden">+</span>
+<span class="hidden lg:inline text-secondary">+</span>
+<span class="hidden lg:inline">NOTÍCIAS</span>
+<span class="text-2xl lg:text-3xl font-black">360</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto py-8 px-4 flex flex-col gap-8">
+<div>
+<nav class="space-y-2">
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl bg-white shadow-soft text-primary dark:bg-gray-800 dark:text-white font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Dashboard</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">article</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Articles</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">group</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Journalists</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">perm_media</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Media</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Editorial Notes</span>
+</a>
+</nav>
+</div>
+<div class="hidden lg:block px-4">
+<p class="text-[10px] uppercase font-bold text-text-muted-light dark:text-text-muted-dark tracking-widest mb-4">Categories</p>
+<nav class="space-y-1">
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">National</a>
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">Politics</a>
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">Business</a>
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">Technology</a>
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">Sports</a>
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">Lifestyle</a>
+<a class="block px-4 py-2 rounded-xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all font-fulga text-sm tracking-wider" href="#">Travel</a>
+</nav>
+</div>
+<div class="mt-auto">
+<nav class="space-y-2">
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Settings</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-4 px-4 py-3 rounded-2xl text-text-muted-light hover:text-text-light hover:bg-white/50 dark:text-text-muted-dark dark:hover:text-text-dark dark:hover:bg-gray-800/50 font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-xl">support_agent</span>
+<span class="hidden lg:inline font-fulga tracking-wider text-sm">Support</span>
+</a>
+</nav>
+</div>
+</div>
+</aside>
+<main class="flex-1 ml-20 lg:ml-64 p-8 lg:p-12 max-w-7xl mx-auto">
+<header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+<div>
+<h1 class="text-3xl font-light font-fulga tracking-wide mb-1 text-primary">Admin Dashboard</h1>
+<p class="text-sm text-text-muted-light font-medium tracking-wider">Real-time insights and content metrics</p>
+</div>
+<div class="flex items-center gap-6 w-full md:w-auto">
+<div class="relative w-full md:w-80">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted-light text-xl">search</span>
+<input class="w-full pl-12 pr-4 py-3 glass-panel rounded-full text-sm focus:ring-1 focus:ring-primary focus:outline-none dark:text-white placeholder-text-muted-light transition-shadow hover:shadow-soft" placeholder="Search..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-12 h-12 rounded-full glass-panel flex items-center justify-center text-text-muted-light hover:text-primary transition-all hover:shadow-soft relative">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-3 right-3 w-2 h-2 bg-secondary rounded-full shadow-[0_0_8px_rgba(227,6,19,0.6)]"></span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-border-light dark:border-border-dark">
+<img alt="Admin Avatar" class="w-10 h-10 rounded-full ring-2 ring-white shadow-soft object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe3zElgz1p6X6apD6PjcWpB-A1IwhTsBEKcPnSXA5kYW_PaaIzbwOJDVJyipJUNRk-gv87xjyp7wtgcxHLN0gnK0DinAq3RM9-PmZM12ILXU-K4_-KIlrfnRxVk1HN5bKhdUlUuhxPGp72dLW-FZknSUn-_8yVuLxY8HaKWVksyqh7EwFCOYCi-xBr2G4OjSuriye9HddJUUp_0QuMQ2qUfMSB_wnUmvpn6KsGmQBTTlxENT_iVVHphK35MHWcK6bMxxQGXzfIwJ1k"/>
+</div>
+</div>
+</div>
+</header>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+<div class="xl:col-span-2 space-y-8">
+<div class="glass-panel rounded-[2rem] p-10 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+<div class="absolute bottom-0 left-10 w-64 h-64 bg-secondary/5 rounded-full blur-3xl"></div>
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+<div>
+<p class="text-xs font-bold text-primary mb-3 uppercase tracking-widest font-fulga">Content Overview</p>
+<h2 class="text-3xl font-light mb-6 leading-tight max-w-md font-fulga">Visão geral do conteúdo e métricas do Notícias 360</h2>
+<button class="bg-primary/10 text-primary hover:bg-primary hover:text-white px-8 py-3 rounded-full font-medium inline-flex items-center gap-3 transition-all duration-300 font-fulga tracking-wider text-sm shadow-soft hover:shadow-glow">
+                            Criar Notícia
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="w-full md:w-auto flex-1">
+<div class="h-32 w-full flex items-end gap-2 justify-end opacity-60">
+<div class="w-2 bg-gradient-to-t from-primary/40 to-transparent rounded-t-full h-[30%]"></div>
+<div class="w-2 bg-gradient-to-t from-primary/60 to-transparent rounded-t-full h-[50%]"></div>
+<div class="w-2 bg-gradient-to-t from-primary/80 to-transparent rounded-t-full h-[80%]"></div>
+<div class="w-2 bg-gradient-to-t from-primary to-transparent rounded-t-full h-[60%]"></div>
+<div class="w-2 bg-gradient-to-t from-secondary/60 to-transparent rounded-t-full h-[90%]"></div>
+<div class="w-2 bg-gradient-to-t from-secondary/40 to-transparent rounded-t-full h-[40%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel rounded-3xl p-8 relative overflow-hidden group hover:shadow-soft transition-all">
+<div class="absolute top-4 right-4 text-text-muted-light group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">trending_up</span>
+</div>
+<p class="text-xs font-medium text-text-muted-light tracking-wider font-fulga mb-4">Total de notícias</p>
+<div class="flex items-end gap-4 mb-4">
+<h3 class="text-4xl font-light text-primary font-fulga">49</h3>
+<span class="text-xs text-green-500 font-medium mb-1">+12%</span>
+</div>
+<div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[70%] rounded-full"></div>
+</div>
+</div>
+<div class="glass-panel rounded-3xl p-8 relative overflow-hidden group hover:shadow-soft transition-all">
+<div class="absolute top-4 right-4 text-text-muted-light group-hover:text-orange-500 transition-colors">
+<span class="material-symbols-outlined text-lg">edit_document</span>
+</div>
+<p class="text-xs font-medium text-text-muted-light tracking-wider font-fulga mb-4">Rascunho</p>
+<div class="flex items-end gap-4 mb-4">
+<h3 class="text-4xl font-light text-text-light font-fulga">48</h3>
+<span class="text-xs text-text-muted-light font-medium mb-1">5 this week</span>
+</div>
+<div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-orange-400 w-[40%] rounded-full"></div>
+</div>
+</div>
+<div class="glass-panel rounded-3xl p-8 relative overflow-hidden group hover:shadow-soft transition-all">
+<div class="absolute top-4 right-4 text-text-muted-light group-hover:text-green-500 transition-colors">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</div>
+<p class="text-xs font-medium text-text-muted-light tracking-wider font-fulga mb-4">Publicadas</p>
+<div class="flex items-end gap-4 mb-4">
+<h3 class="text-4xl font-light text-text-light font-fulga">0</h3>
+<span class="text-xs text-text-muted-light font-medium mb-1">-</span>
+</div>
+<div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-green-400 w-[0%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-xl font-light font-fulga tracking-wide">Últimas Notícias</h2>
+<div class="flex gap-3">
+<button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-text-muted-light hover:text-primary transition-all hover:shadow-soft">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+</button>
+<button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-text-muted-light hover:text-primary transition-all hover:shadow-soft">
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="glass-panel rounded-3xl overflow-hidden group hover:shadow-soft transition-all">
+<div class="h-48 bg-gray-100 relative overflow-hidden">
+<img alt="News thumbnail" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105 transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdxe70gHJZ7rCJP1YcyfkLvC4FkTElubX8zvghwkAO3kwTj4eNZ1NcLt1DxtoPXiK7Upk_GmLZaoqiLmpgB6udI7_FYQ9ciZeDsgmcrpdJTFE8a7vli9Wse25fiEjIZr-dLNkWdyI9q_KqKx_SI08uQ0HoPSPL70xGGDxWBkyAb5sMn1WqePW0zsEm8BMJ-SyryS1R0gN6ahTn-xw5PckIqwCyW-RZhc7kHm7xAlXDl5zbbdKflUa4XdQMlToNLwWmuFHGSKluAHUz"/>
+</div>
+<div class="p-6">
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-3 font-fulga">POLÍCIA</p>
+<h3 class="font-medium mb-6 line-clamp-2 hover:text-primary cursor-pointer transition-colors leading-relaxed">Homem é preso por agredir companheira</h3>
+<div class="flex items-center justify-between pt-4 border-t border-border-light">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-gray-200"></div>
+<span class="text-xs text-text-muted-light font-medium tracking-wide">Editor</span>
+</div>
+<span class="text-[10px] text-text-muted-light font-medium tracking-wider">08/02/2026</span>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-3xl overflow-hidden group hover:shadow-soft transition-all">
+<div class="h-48 bg-gray-100 relative overflow-hidden">
+<img alt="News thumbnail" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105 transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdHaLwbnz47ZMznwf0J8XnYVHystyH4bzNSTsxeuwyGTFnPiH4imXxbW0BcWBOGcNJ4-Y-f8KYQKMMDKhsyhovkJMi4-ft9nrsPUcuB7bJpxDMgx4YWBUqrnQ55EsYL8CE4_31zeT7afXx4V9wvjaQ24vymzjVUlMmriGUNmfD5DPOsZAS436Ei4xaN1PvDH99FlL4U3FA12RYjLgvNPggO70QF4o9mRNp3CGiY5MBGGUZzD-yzWY7oNp8ssLywU-iEec9azFmM6Vf"/>
+</div>
+<div class="p-6">
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-3 font-fulga">POLÍCIA</p>
+<h3 class="font-medium mb-6 line-clamp-2 hover:text-primary cursor-pointer transition-colors leading-relaxed">PM apreende veículo com carga irregular</h3>
+<div class="flex items-center justify-between pt-4 border-t border-border-light">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-gray-200"></div>
+<span class="text-xs text-text-muted-light font-medium tracking-wide">Editor</span>
+</div>
+<span class="text-[10px] text-text-muted-light font-medium tracking-wider">08/02/2026</span>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-3xl overflow-hidden group hover:shadow-soft transition-all">
+<div class="h-48 bg-gray-100 relative overflow-hidden">
+<img alt="News thumbnail" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105 transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQjJRn0DIKKeRlDL2ynrdGELc4Fk53X_p2BUmHQoDkie3wJfhvDqjt6NaTWR8GA3yWpLTiEmAKgBMm2azDgMlQiZsULVhL4xvp8NF_xF3GbQAlS3r_CWXTuiPvOfqaN9GgY1EroG91D0IV4BRtAaPg-3_eD-G8A_lrakp7k33jvbypyUxHRllVDC99ZamuEEWWH55sZ38p4OXsCNsNr2-EkxBxL1gK_UL12qSceegWuky_QIDh86xfLlma3mYvQG4bsDUQIMVu-N8Q"/>
+</div>
+<div class="p-6">
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-3 font-fulga">POLÍCIA</p>
+<h3 class="font-medium mb-6 line-clamp-2 hover:text-primary cursor-pointer transition-colors leading-relaxed">Delegacia de crimes cibernéticos prende quadrilha</h3>
+<div class="flex items-center justify-between pt-4 border-t border-border-light">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-gray-200"></div>
+<span class="text-xs text-text-muted-light font-medium tracking-wide">Editor</span>
+</div>
+<span class="text-[10px] text-text-muted-light font-medium tracking-wider">08/02/2026</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-8">
+<div class="glass-panel rounded-[2rem] p-8">
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-light text-lg font-fulga tracking-wide">Status Overview</h2>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-text-muted-light hover:bg-white/50 transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</div>
+<div class="flex flex-col items-center mb-8 relative">
+<div class="w-36 h-36 rounded-full border border-border-light flex items-center justify-center relative mb-6 p-2 bg-white/30">
+<svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+<circle class="text-gray-200" cx="50" cy="50" fill="transparent" r="46" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-primary transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="46" stroke="currentColor" stroke-dasharray="289" stroke-dashoffset="100" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<img alt="Admin Avatar" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5NX5jzRtv97K1n0WdCY6xSrtn4lASwJVXwm98XudgfBoqN1LPicNXTLmW-0_33FjZiSAjGGAiLmlbqqC4_z3PNdUTv79vNuHqymNOMMxqAG7vUg19PcWKrRU5EVlRfzlGYIDdR6Erir1eeIqr1x6V1N6y8xOWVGizAqEx5bRMnLvoUxi0N8R8x0NaqjO4jVJZUtonIaCAxQ8YE1KFCkXd_BF7UkaUXhwlZRLLCxNMX4I-Uvb5kapR1ytIl31D_7CrUdd0Po-ri-5i"/>
+</div>
+<div class="text-center">
+<p class="text-xs font-bold text-text-muted-light uppercase tracking-widest mb-1 font-fulga">Welcome Back</p>
+<h3 class="font-light text-2xl font-fulga text-primary mb-2">Admin</h3>
+<p class="text-xs text-text-muted-light tracking-wide max-w-[200px] mx-auto leading-relaxed">System overview and daily performance metrics.</p>
+</div>
+</div>
+<div class="pt-6 border-t border-border-light">
+<div class="flex items-end justify-between h-20 gap-3 mb-3 px-2">
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer h-full">
+<div class="w-1.5 bg-primary/20 rounded-full h-[30%] group-hover:bg-primary transition-colors"></div>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer h-full">
+<div class="w-1.5 bg-primary/40 rounded-full h-[60%] group-hover:bg-primary transition-colors"></div>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer h-full">
+<div class="w-1.5 bg-primary/30 rounded-full h-[45%] group-hover:bg-primary transition-colors"></div>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer h-full">
+<div class="w-1.5 bg-primary rounded-full h-[90%] shadow-glow"></div>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer h-full">
+<div class="w-1.5 bg-primary/20 rounded-full h-[20%] group-hover:bg-primary transition-colors"></div>
+</div>
+</div>
+<div class="flex justify-between text-[10px] text-text-muted-light font-medium px-2 uppercase tracking-widest font-fulga">
+<span>Mon</span>
+<span>Tue</span>
+<span>Wed</span>
+<span>Thu</span>
+<span>Fri</span>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-[2rem] p-8">
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-light text-lg font-fulga tracking-wide">Quick Actions</h2>
+<button class="w-8 h-8 rounded-full border border-border-light flex items-center justify-center text-text-muted-light hover:text-primary hover:border-primary transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center p-4 rounded-2xl bg-white/40 border border-transparent hover:border-border-light hover:bg-white/60 transition-all cursor-pointer group">
+<div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mr-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-lg">edit_square</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-medium text-text-light group-hover:text-primary transition-colors font-fulga tracking-wide">Nova Notícia</p>
+<p class="text-[10px] text-text-muted-light uppercase tracking-wider mt-0.5">Criar conteúdo</p>
+</div>
+<span class="material-symbols-outlined text-text-muted-light text-sm group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+</div>
+<div class="flex items-center p-4 rounded-2xl bg-white/40 border border-transparent hover:border-border-light hover:bg-white/60 transition-all cursor-pointer group">
+<div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mr-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-lg">cloud_upload</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-medium text-text-light group-hover:text-primary transition-colors font-fulga tracking-wide">Enviar Mídia</p>
+<p class="text-[10px] text-text-muted-light uppercase tracking-wider mt-0.5">Biblioteca</p>
+</div>
+<span class="material-symbols-outlined text-text-muted-light text-sm group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+</div>
+<div class="flex items-center p-4 rounded-2xl bg-white/40 border border-transparent hover:border-border-light hover:bg-white/60 transition-all cursor-pointer group">
+<div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mr-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-lg">fact_check</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-medium text-text-light group-hover:text-primary transition-colors font-fulga tracking-wide">Revisar</p>
+<p class="text-[10px] text-text-muted-light uppercase tracking-wider mt-0.5">1 pendente</p>
+</div>
+<span class="material-symbols-outlined text-text-muted-light text-sm group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

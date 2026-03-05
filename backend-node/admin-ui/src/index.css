@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=lufga@300,400,500,600,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 220 15% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 12%;
+
+    /* PRIMARY = Vermelho da marca #E30614 → HSL(356, 97%, 44%) */
+    --primary: 356 97% 44%;
+    --primary-foreground: 0 0% 100%;
+
+    /* SECONDARY = Azul da marca #004796 → HSL(216, 100%, 29%) */
+    --secondary: 216 100% 29%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 216 40% 94%;
+    --accent-foreground: 216 100% 29%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 356 97% 44%;
+    --radius: 0.5rem;
+
+    --chart-1: 356 97% 44%;
+    --chart-2: 216 100% 29%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --muted: 217 33% 18%;
+    /* Labels e texto secundário mais claros no escuro para melhor leitura */
+    --muted-foreground: 214 32% 85%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+    --ring: 356 97% 44%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Lufga', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+}
+
+/* ─── Card do painel (light/dark) ─── */
+.card-panel {
+  @apply bg-card/80 backdrop-blur-xl border border-border rounded-[32px] shadow-[0_8px_32px_0_rgba(31,38,135,0.03)];
+  @apply dark:bg-card dark:border-border;
+}
+
+/* ─── Sidebar com identidade visual ─── */
+.sidebar-brand {
+  background: linear-gradient(180deg, #004796 0%, #001f45 100%);
+}
+
+/* ─── Espaçamento dinâmico da tabela de notícias ─── */
+.table-spacing-compact table th,
+.table-spacing-compact table td {
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+}
+
+.table-spacing-comfortable table th,
+.table-spacing-comfortable table td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}
+
+.table-spacing-spacious table th,
+.table-spacing-spacious table td {
+  padding: 1rem 1.25rem;
+  vertical-align: middle;
+}
+
+/* ─── TipTap editor ─── */
+.tiptap.ProseMirror {
+  min-height: 14rem;
+  outline: none;
+}
+
+.tiptap.ProseMirror p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap.ProseMirror p+p {
+  margin-top: 0.5em;
+}
+
+.tiptap.ProseMirror ul,
+.tiptap.ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0.5em 0;
+}
+
+.tiptap.ProseMirror h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.75em 0 0.25em;
+}
+
+.tiptap.ProseMirror h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.75em 0 0.25em;
+}
+
+.tiptap.ProseMirror h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.5em 0 0.25em;
+}
+
+.tiptap.ProseMirror blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 1rem;
+  margin: 0.5em 0;
+  color: hsl(var(--muted-foreground));
+}
