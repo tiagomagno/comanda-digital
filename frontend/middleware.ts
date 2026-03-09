@@ -1,62 +1,32 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Rotas públicas que não precisam de autenticação
-const publicRoutes = [
-    '/',
-    '/auth/login',
-    '/cadastro',           // Self-onboarding de novos estabelecimentos
-    '/operacao/login',     // Login da equipe operacional (garçom, bar, cozinha)
-    '/acesso', // Links: cardápio e painel + credenciais
-    '/cliente', // Cliente: QR Code, cardápio, comanda, pedidos
-    '/comanda', // Comanda nova / por código (fluxo cliente)
-    '/cardapio',
-    '/pedido',
-    '/carrinho',
-    '/mesa',
-];
+export function middleware(req: NextRequest) {
+    const url = req.nextUrl;
+    const hostname = req.headers.get('host') || '';
 
-// Mapeamento de rotas para roles
-const roleRoutes: Record<string, string[]> = {
-    '/admin': ['GESTOR'],
-    '/gestor': ['GESTOR'],
-    '/garcom': ['GARCOM', 'GESTOR'],
-    '/cozinha': ['COZINHA', 'GESTOR'],
-    '/bar': ['COZINHA', 'GESTOR'], // Bar usa mesma role de Cozinha por enquanto
-    '/caixa': ['CAIXA', 'GESTOR'],
-};
+    // Determinar se estamos acessando um subdomínio de "app." (Painel admin)
+    const isAppSubdomain =
+        hostname.startsWith('app.') ||
+        // Regex opcional para testes locais como app.localhost:3000
+        /^app\.(localhost|[\w.-]+)(:\d+)?$/.test(hostname);
 
-export function middleware(request: NextRequest) {
-    const token = request.cookies.get('token')?.value;
-    const { pathname } = request.nextUrl;
-
-    // Se a rota for pública, permite
-    if (publicRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.next();
+    // Se o usuário acessar a URL base / de um subdomínio app...
+    if (isAppSubdomain && url.pathname === '/') {
+        // Reescrever invisivelmente para /auth/login ou /admin conforme necessário
+        // Vamos mandá-lo para a tela de login inicial do sistema
+        return NextResponse.rewrite(new URL('/auth/login', req.url));
     }
 
-    // Se não tiver token e tentar acessar rota protegida, redireciona para login
-    if (!token) {
-        return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-
-    // A validação de role no middleware é complexa sem decodificar o token jwt (que precisa de lib externa no edge)
-    // Por enquanto, vamos deixar a validação de role para o AuthContext/Layout no client-side
-    // ou apenas checar a existência do token no middleware.
+    // Aqui você pode expandir para interceptar todas as rotas (ex: se digitar app.site.com/dashboard joga pra /admin/dashboard)
+    // Por ora deixaremos Next lidar com o resto do painel livremente.
 
     return NextResponse.next();
 }
 
 export const config = {
+    // Ignorar rotas de API do next, imagens e arquivos estáticos (otimização)
     matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - api (API routes)
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - manifest.json
-         */
-        '/((?!api|_next/static|_next/image|favicon.ico|manifest.json).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 };
