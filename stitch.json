@@ -1,0 +1,12 @@
+{
+  "projectId": "14803662431633772295",
+  "projectTitle": "Kitchen Kanban Board",
+  "description": "Projeto Stitch do Painel Administrativo Comanda Digital — visão do gestor do restaurante.",
+  "designTheme": {
+    "colorMode": "LIGHT",
+    "font": "WORK_SANS",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#13ec80",
+    "saturation": 2
+  }
+}

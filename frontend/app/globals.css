@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: #F4F4F6;
+        --foreground: #020306;
+        --primary: #FF5C01;
+        --muted: #B9B9B9;
+    }
+
+    body {
+        @apply bg-[#F4F4F6] text-[#020306];
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+}

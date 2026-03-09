@@ -1,0 +1,292 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Estabelecimento {
+  id              String   @id @default(uuid())
+  nome            String
+  operaLocal      Boolean  @default(false) @map("opera_local")
+  operaHospedado  Boolean  @default(false) @map("opera_hospedado")
+  operaDelivery   Boolean  @default(false) @map("opera_delivery")
+  cnpj            String?  @unique
+  telefone        String?
+  email           String?
+  endereco        String?
+  cidade          String?
+  estado          String?
+  cep             String?
+  configuracoes   Json     @default("{}")
+  lotacaoMaxima   Int?     @map("lotacao_maxima")
+  permiteCmdIndiv Boolean  @default(true) @map("permite_comanda_individual")
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  usuarios   Usuario[]
+  categorias Categoria[]
+  comandas   Comanda[]
+  mesas      Mesa[]
+  GrupoMesa  GrupoMesa[]
+
+  @@map("estabelecimentos")
+}
+
+model Usuario {
+  id                String      @id @default(uuid())
+  estabelecimentoId String?     @map("estabelecimento_id")
+  nome              String
+  telefone          String?
+  email             String?     @unique
+  senhaHash         String?     @map("senha_hash")
+  codigoAcesso      String?     @unique @map("codigo_acesso")
+  tipo              TipoUsuario
+  ativo             Boolean     @default(true)
+  ultimoAcesso      DateTime?   @map("ultimo_acesso")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento?        @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  historicoStatus HistoricoStatusPedido[]
+
+  @@map("usuarios")
+}
+
+enum TipoUsuario {
+  cliente
+  garcom
+  entregador
+  cozinha
+  bar
+  admin
+}
+
+model Mesa {
+  id                String   @id @default(uuid())
+  estabelecimentoId String   @map("estabelecimento_id")
+  numero            String
+  capacidade        Int      @default(4)
+  qrCodeUrl         String?  @map("qr_code_url")
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  comandas        Comanda[]
+  grupos          MesaGrupo[]
+
+  @@unique([estabelecimentoId, numero])
+  @@map("mesas")
+}
+
+model GrupoMesa {
+  id                String   @id @default(uuid())
+  estabelecimentoId String   @map("estabelecimento_id")
+  nome              String
+  capacidadeTotal   Int      @map("capacidade_total")
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  mesas           MesaGrupo[]
+  comandas        Comanda[]
+
+  @@map("grupos_mesa")
+}
+
+model MesaGrupo {
+  id        String   @id @default(uuid())
+  grupoId   String   @map("grupo_id")
+  mesaId    String   @map("mesa_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  grupo GrupoMesa @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  mesa  Mesa      @relation(fields: [mesaId], references: [id], onDelete: Cascade)
+
+  @@unique([grupoId, mesaId])
+  @@map("mesa_grupo")
+}
+
+model Categoria {
+  id                String           @id @default(uuid())
+  estabelecimentoId String           @map("estabelecimento_id")
+  nome              String
+  descricao         String?
+  destino           DestinoCategoria
+  cor               String           @default("#3b82f6")
+  icone             String?
+  ordem             Int              @default(0)
+  ativo             Boolean          @default(true)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  produtos        Produto[]
+
+  @@unique([estabelecimentoId, nome])
+  @@map("categorias")
+}
+
+enum DestinoCategoria {
+  BAR
+  COZINHA
+}
+
+model Produto {
+  id                String   @id @default(uuid())
+  categoriaId       String   @map("categoria_id")
+  codigo            String?
+  nome              String
+  descricao         String?
+  preco             Decimal  @db.Decimal(10, 2)
+  precoPromocional  Decimal? @map("preco_promocional") @db.Decimal(10, 2)
+  imagemUrl         String?  @map("imagem_url")
+  videoUrl          String?  @map("video_url")
+  disponivel        Boolean  @default(true)
+  destaque          Boolean  @default(false)
+  ordem             Int      @default(0)
+  estoqueControlado Boolean  @default(false) @map("estoque_controlado")
+  quantidadeEstoque Int      @default(0) @map("quantidade_estoque")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  categoria   Categoria    @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  pedidoItens PedidoItem[]
+
+  @@map("produtos")
+}
+
+model Comanda {
+  id                String          @id @default(uuid())
+  estabelecimentoId String          @map("estabelecimento_id")
+  mesaId            String?         @map("mesa_id")
+  codigo            String          @unique
+  nomeCliente       String          @map("nome_cliente")
+  telefoneCliente   String          @map("telefone_cliente")
+  emailCliente      String?         @map("email_cliente")
+  mesa              String? // Deprecated: usar mesaId
+  tipoComanda       TipoComanda     @default(individual) @map("tipo_comanda")
+  formaPagamento    FormaPagamento? @map("forma_pagamento")
+  status            StatusComanda   @default(ativa)
+  totalEstimado     Decimal         @default(0) @map("total_estimado") @db.Decimal(10, 2)
+  observacoes       String?
+  qrCodeUrl         String?         @map("qr_code_url") @db.LongText
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  finalizadaAt      DateTime?       @map("finalizada_at")
+  canceladaAt       DateTime?       @map("cancelada_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  mesaRelacao     Mesa?           @relation(fields: [mesaId], references: [id])
+  pedidos         Pedido[]
+  GrupoMesa       GrupoMesa?      @relation(fields: [grupoMesaId], references: [id])
+  grupoMesaId     String?
+
+  @@index([estabelecimentoId])
+  @@index([mesaId])
+  @@index([status])
+  @@index([codigo])
+  @@index([createdAt])
+  @@map("comandas")
+}
+
+enum StatusComanda {
+  ativa
+  aguardando_pagamento
+  paga
+  finalizada
+  cancelada
+}
+
+enum TipoComanda {
+  mesa
+  individual
+}
+
+enum FormaPagamento {
+  imediato
+  final
+}
+
+model Pedido {
+  id              String            @id @default(uuid())
+  comandaId       String            @map("comanda_id")
+  numeroPedido    Int               @map("numero_pedido")
+  status          StatusPedido      @default(criado)
+  destino         DestinoCategoria?
+  total           Decimal           @db.Decimal(10, 2)
+  observacoes     String?
+  aprovadoPor     String?           @map("aprovado_por")
+  aprovadoAt      DateTime?         @map("aprovado_at")
+  metodoPagamento String?           @map("metodo_pagamento")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  pagoAt          DateTime?         @map("pago_at")
+  emPreparoAt     DateTime?         @map("em_preparo_at")
+  prontoAt        DateTime?         @map("pronto_at")
+  entregueAt      DateTime?         @map("entregue_at")
+  canceladoAt     DateTime?         @map("cancelado_at")
+
+  comanda   Comanda                 @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  itens     PedidoItem[]
+  historico HistoricoStatusPedido[]
+
+  @@unique([comandaId, numeroPedido])
+  @@index([comandaId])
+  @@index([status])
+  @@index([destino])
+  @@index([createdAt])
+  @@map("pedidos")
+}
+
+enum StatusPedido {
+  criado
+  aguardando_pagamento
+  pago
+  em_preparo
+  pronto
+  entregue
+  cancelado
+}
+
+model PedidoItem {
+  id            String   @id @default(uuid())
+  pedidoId      String   @map("pedido_id")
+  produtoId     String   @map("produto_id")
+  quantidade    Int      @default(1)
+  precoUnitario Decimal  @map("preco_unitario") @db.Decimal(10, 2)
+  subtotal      Decimal  @db.Decimal(10, 2)
+  observacoes   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  pedido  Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@index([pedidoId])
+  @@index([produtoId])
+  @@map("pedido_itens")
+}
+
+model HistoricoStatusPedido {
+  id             String   @id @default(uuid())
+  pedidoId       String   @map("pedido_id")
+  statusAnterior String?  @map("status_anterior")
+  statusNovo     String   @map("status_novo")
+  usuarioId      String?  @map("usuario_id")
+  observacao     String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  pedido  Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([pedidoId])
+  @@map("historico_status_pedido")
+}
