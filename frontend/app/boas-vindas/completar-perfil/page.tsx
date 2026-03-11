@@ -217,32 +217,57 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
     const [loadingCidades, setLoadingCidades] = useState(false);
 
     useEffect(() => {
-        if (!data.estado) { setCidades([]); return; }
+        if (!data.estado) {
+            setCidades([]);
+            return;
+        }
+        
         setLoadingCidades(true);
         fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${data.estado}/municipios`)
-            .then(res => res.json())
-            .then(json => {
-                const names = json.map((m: any) => m.nome);
+            .then(async (res) => {
+                if (!res.ok) throw new Error('Falha na API do IBGE');
+                return res.json();
+            })
+            .then((json) => {
+                if (!Array.isArray(json)) throw new Error('Formato inválido do IBGE');
+                
+                const names = json
+                    .map((m: any) => m.nome)
+                    .sort((a: string, b: string) => a.localeCompare(b));
+                    
                 setCidades(names);
             })
-            .catch(() => toast.error('Erro ao carregar cidades'))
+            .catch((err) => {
+                console.error(err);
+                toast.error('Erro ao carregar cidades. Verifique sua conexão.');
+                setCidades([]);
+            })
             .finally(() => setLoadingCidades(false));
     }, [data.estado]);
 
     const buscarCep = async () => {
         const cepLimpo = data.cep.replace(/\D/g, '');
         if (cepLimpo.length !== 8) { toast.error('CEP inválido'); return; }
+        
         setBuscandoCep(true);
         try {
             const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+            if (!res.ok) throw new Error('Falha no ViaCEP');
             const json = await res.json();
+            
             if (json.erro) { toast.error('CEP não encontrado'); return; }
+            
             onChange('logradouro', json.logradouro || '');
             onChange('bairro', json.bairro || '');
-            onChange('cidade', json.localidade || '');
+            // O estado muda e engatilha o useEffect, portanto a cidade vai preencher o dropdown
             onChange('estado', json.uf || '');
+            
+            // Para garantir que a cidade será definida corretamente caso o estado já seja o mesmo
+            onChange('cidade', json.localidade || '');
+            
             toast.success('Endereço preenchido!');
-        } catch {
+        } catch (err) {
+            console.error(err);
             toast.error('Erro ao buscar CEP');
         } finally {
             setBuscandoCep(false);
