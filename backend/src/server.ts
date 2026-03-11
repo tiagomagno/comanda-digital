@@ -10,16 +10,22 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+const corsOrigin = process.env.CORS_ORIGIN === '*' 
+    ? '*' 
+    : (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : 'http://localhost:3000');
+
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-        methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+        origin: corsOrigin,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        credentials: true
     },
 });
 
 // Middlewares
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: corsOrigin,
+    credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
