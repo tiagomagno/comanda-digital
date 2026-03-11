@@ -12,6 +12,7 @@ import cozinhaRoutes from './cozinha.routes.js';
 import caixaRoutes from './caixa.routes.js';
 import clienteRoutes from './cliente.routes.js';
 import importarRoutes from './importar.routes.js';
+import uploadRoutes from './upload.routes.js';
 import prisma from '../config/database.js';
 import bcrypt from 'bcryptjs';
 
@@ -55,6 +56,9 @@ router.use('/preparo', preparoRoutes);
 
 // Rotas de importação (admin)
 router.use('/importar', importarRoutes);
+
+// Rotas de upload (protegidas)
+router.use('/upload', uploadRoutes);
 
 import { logger } from '../utils/logger.js';
 import { asyncHandler } from '../middlewares/error.middleware.js';

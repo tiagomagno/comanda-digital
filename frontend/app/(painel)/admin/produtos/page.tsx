@@ -88,6 +88,7 @@ export default function ProdutosPage() {
         codigo: '', nome: '', descricao: '', preco: '',
         precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: ''
     });
+    const [isUploading, setIsUploading] = useState(false);
 
 
     const abrirEdicao = (produto: Produto) => {
@@ -111,7 +112,13 @@ export default function ProdutosPage() {
 
 
     const getImagemProduto = (p: Produto) => {
-        if (p.imagemUrl) return p.imagemUrl;
+        if (p.imagemUrl) {
+            if (p.imagemUrl.startsWith('/')) {
+                const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+                return `${apiUrl}${p.imagemUrl}`;
+            }
+            return p.imagemUrl;
+        }
         const seed = encodeURIComponent(p.id + p.nome);
         return `https://picsum.photos/seed/${seed}/400/400`;
     };
@@ -287,6 +294,45 @@ export default function ProdutosPage() {
         if (!buscaCategoria.trim()) return categorias;
         return categorias.filter(c => c.nome.toLowerCase().includes(buscaCategoria.toLowerCase()));
     }, [categorias, buscaCategoria]);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+            
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', file);
+
+            const res = await fetch(`${apiUrl}/api/upload/image`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Não enviar Content-Type. O navegador definirá o boundary multipart/form-data automático.
+                },
+                body: formDataUpload
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Falha ao fazer upload da imagem');
+            }
+
+            const data = await res.json();
+            setFormData(prev => ({ ...prev, imagemUrl: data.url }));
+            toast.success('Upload concluído!');
+        } catch (error: any) {
+            console.error('Erro no upload:', error);
+            toast.error(error.message || 'Erro ao enviar imagem. Tente novamente.');
+        } finally {
+            setIsUploading(false);
+            // Limpa o input de arquivo para permitir enviar o mesmo arquivo novamente se precisar
+            e.target.value = '';
+        }
+    };
 
     // Label da categoria ativa
     const categoriaAtiva = categorias.find(c => c.id === filter);
@@ -1018,21 +1064,32 @@ export default function ProdutosPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Link da Imagem</label>
-                                            <input type="url" value={formData.imagemUrl}
-                                                onChange={e => setFormData({ ...formData, imagemUrl: e.target.value })}
-                                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
-                                                placeholder="https://exemplo.com/imagem.jpg" />
-                                            <p className="text-xs text-gray-400 mt-1">Insira a URL de uma foto para exibição do produto.</p>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Imagem do Produto</label>
+                                            <div className="flex gap-2">
+                                                <input type="url" value={formData.imagemUrl}
+                                                    onChange={e => setFormData({ ...formData, imagemUrl: e.target.value })}
+                                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
+                                                    placeholder="URL ou faça upload ->" />
+                                                
+                                                <label className={`flex items-center justify-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer hover:bg-gray-50 transition-colors shrink-0 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    {isUploading ? (
+                                                        <RefreshCw className="w-5 h-5 animate-spin" />
+                                                    ) : (
+                                                        <Upload className="w-5 h-5" />
+                                                    )}
+                                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                                                </label>
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1">Cole uma URL ou clique no botão para enviar do PC.</p>
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Link do Vídeo</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Link do Vídeo (YouTube)</label>
                                             <input type="url" value={formData.videoUrl}
                                                 onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
                                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
-                                                placeholder="https://www.youtube.com/embed/..." />
-                                            <p className="text-xs text-gray-400 mt-1">Ao clicar na imagem, o vídeo será exibido em Reels.</p>
+                                                placeholder="https://www.youtube.com/watch?v=..." />
+                                            <p className="text-xs text-gray-400 mt-1">Ao visualizar o produto, o vídeo será exibido.</p>
                                         </div>
                                     </div>
 
