@@ -86,7 +86,7 @@ export default function ProdutosPage() {
     // Produto form
     const [formData, setFormData] = useState({
         codigo: '', nome: '', descricao: '', preco: '',
-        precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '',
+        precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: ''
     });
 
 
@@ -101,6 +101,7 @@ export default function ProdutosPage() {
             categoriaId: produto.categoria.id,
             destaque: produto.destaque,
             videoUrl: produto.videoUrl || '',
+            imagemUrl: produto.imagemUrl || '',
         });
         setShowModal(true);
     };
@@ -173,41 +174,64 @@ export default function ProdutosPage() {
             const match = videoUrl.match(/[?&]v=([^&]+)/);
             if (match) videoUrl = `https://www.youtube.com/embed/${match[1]}`;
         }
+        
+        let imagemUrl = formData.imagemUrl.trim() || undefined;
 
-        if (editandoProduto) {
-            // Modo edição — atualiza produto existente localmente
-            setProdutos(prev => prev.map(p => p.id === editandoProduto.id ? {
-                ...p,
-                codigo: formData.codigo,
-                nome: formData.nome,
-                descricao: formData.descricao || undefined,
-                preco: parseFloat(formData.preco),
-                precoPromocional: formData.precoPromocional ? parseFloat(formData.precoPromocional) : undefined,
-                categoria: categoriaSelecionada,
-                destaque: formData.destaque,
-                videoUrl,
-            } : p));
-            toast.success('Produto atualizado!');
-        } else {
-            const novoProduto: Produto = {
-                id: Date.now().toString(),
-                codigo: formData.codigo,
-                nome: formData.nome,
-                descricao: formData.descricao || undefined,
-                preco: parseFloat(formData.preco),
-                precoPromocional: formData.precoPromocional ? parseFloat(formData.precoPromocional) : undefined,
-                categoria: categoriaSelecionada,
-                disponivel: true,
-                destaque: formData.destaque,
-                videoUrl,
-                unidades: 20,
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+            const headers = { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             };
-            setProdutos(prev => [...prev, novoProduto]);
-            toast.success('Produto criado com sucesso!');
+
+            const payload = {
+                codigo: formData.codigo,
+                nome: formData.nome,
+                descricao: formData.descricao || undefined,
+                preco: parseFloat(formData.preco),
+                precoPromocional: formData.precoPromocional ? parseFloat(formData.precoPromocional) : undefined,
+                categoriaId: categoriaSelecionada.id,
+                destaque: formData.destaque,
+                videoUrl,
+                imagemUrl,
+            };
+
+            if (editandoProduto) {
+                // Modo edição — atualiza produto via API
+                const res = await fetch(`${apiUrl}/api/produtos/${editandoProduto.id}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) throw new Error('Erro ao atualizar produto');
+                const produtoAtualizado = await res.json();
+                
+                setProdutos(prev => prev.map(p => p.id === editandoProduto.id ? { ...produtoAtualizado, categoria: categoriaSelecionada } : p));
+                toast.success('Produto atualizado!');
+            } else {
+                // Modo criação — cria produto via API
+                const res = await fetch(`${apiUrl}/api/produtos`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) throw new Error('Erro ao criar produto');
+                const novoProduto = await res.json();
+                
+                setProdutos(prev => [...prev, { ...novoProduto, categoria: categoriaSelecionada }]);
+                toast.success('Produto criado com sucesso!');
+            }
+            
+            setShowModal(false);
+            setEditandoProduto(null);
+            setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' });
+        } catch (error) {
+            console.error('Erro ao salvar produto:', error);
+            toast.error('Erro ao salvar produto. Verifique sua conexão e tente novamente.');
         }
-        setShowModal(false);
-        setEditandoProduto(null);
-        setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '' });
     };
 
     const criarCategoria = (e: React.FormEvent) => {
@@ -336,7 +360,7 @@ export default function ProdutosPage() {
 
                     {/* Novo Produto */}
                     <button
-                        onClick={() => { setEditandoProduto(null); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '' }); setShowModal(true); }}
+                        onClick={() => { setEditandoProduto(null); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' }); setShowModal(true); }}
                         className="ml-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FF5C01] text-white font-semibold hover:bg-[#e05101] transition-colors shadow-sm text-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -992,13 +1016,24 @@ export default function ProdutosPage() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Link do Vídeo</label>
-                                        <input type="url" value={formData.videoUrl}
-                                            onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
-                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
-                                            placeholder="https://www.youtube.com/embed/..." />
-                                        <p className="text-xs text-gray-400 mt-1">Ao clicar na imagem do produto, o vídeo será exibido em formato Reels.</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Link da Imagem</label>
+                                            <input type="url" value={formData.imagemUrl}
+                                                onChange={e => setFormData({ ...formData, imagemUrl: e.target.value })}
+                                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
+                                                placeholder="https://exemplo.com/imagem.jpg" />
+                                            <p className="text-xs text-gray-400 mt-1">Insira a URL de uma foto para exibição do produto.</p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Link do Vídeo</label>
+                                            <input type="url" value={formData.videoUrl}
+                                                onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
+                                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
+                                                placeholder="https://www.youtube.com/embed/..." />
+                                            <p className="text-xs text-gray-400 mt-1">Ao clicar na imagem, o vídeo será exibido em Reels.</p>
+                                        </div>
                                     </div>
 
                                     <label className="flex items-center gap-2 cursor-pointer">
@@ -1012,7 +1047,7 @@ export default function ProdutosPage() {
 
                             <div className="p-6 pt-4 border-t border-gray-100 flex gap-3">
                                 <button type="button"
-                                    onClick={() => { setShowModal(false); setEditandoProduto(null); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '' }); }}
+                                    onClick={() => { setShowModal(false); setEditandoProduto(null); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' }); }}
                                     className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
                                     Cancelar
                                 </button>
