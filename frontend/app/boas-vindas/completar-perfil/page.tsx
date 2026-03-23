@@ -231,8 +231,15 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
             .then((json) => {
                 if (!Array.isArray(json)) throw new Error('Formato inválido da BrasilAPI');
                 
+                const toTitleCase = (str: string) => {
+                    return str.toLowerCase().split(' ').map(word => {
+                        if (['de', 'da', 'do', 'das', 'dos', 'e'].includes(word)) return word;
+                        return word.charAt(0).toUpperCase() + word.slice(1);
+                    }).join(' ');
+                };
+                
                 const names = json
-                    .map((m: any) => m.nome)
+                    .map((m: any) => toTitleCase(m.nome))
                     .sort((a: string, b: string) => a.localeCompare(b));
                     
                 setCidades(names);
