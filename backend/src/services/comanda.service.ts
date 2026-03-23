@@ -29,6 +29,10 @@ export class ComandaService {
                 tipoComanda: data.tipoComanda || 'individual',
                 formaPagamento: data.formaPagamento || 'final',
                 status: 'ativa',
+                // Delivery
+                clienteId: data.clienteId || undefined,
+                enderecoEntregaId: data.enderecoEntregaId || undefined,
+                taxaEntrega: data.taxaEntrega ?? 0,
             },
         });
 

@@ -35,6 +35,7 @@ model Estabelecimento {
   comandas   Comanda[]
   mesas      Mesa[]
   GrupoMesa  GrupoMesa[]
+  clientes   Cliente[]
 
   @@map("estabelecimentos")
 }
@@ -183,18 +184,24 @@ model Comanda {
   updatedAt         DateTime        @updatedAt @map("updated_at")
   finalizadaAt      DateTime?       @map("finalizada_at")
   canceladaAt       DateTime?       @map("cancelada_at")
+  clienteId         String?         @map("cliente_id")
+  enderecoEntregaId String?         @map("endereco_entrega_id")
+  taxaEntrega       Decimal         @default(0) @map("taxa_entrega") @db.Decimal(10, 2)
 
   estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   mesaRelacao     Mesa?           @relation(fields: [mesaId], references: [id])
   pedidos         Pedido[]
   GrupoMesa       GrupoMesa?      @relation(fields: [grupoMesaId], references: [id])
   grupoMesaId     String?
+  cliente         Cliente?        @relation(fields: [clienteId], references: [id])
+  enderecoEntrega EnderecoCliente? @relation(fields: [enderecoEntregaId], references: [id])
 
   @@index([estabelecimentoId])
   @@index([mesaId])
   @@index([status])
   @@index([codigo])
   @@index([createdAt])
+  @@index([clienteId])
   @@map("comandas")
 }
 
@@ -209,6 +216,7 @@ enum StatusComanda {
 enum TipoComanda {
   mesa
   individual
+  delivery
 }
 
 enum FormaPagamento {
@@ -289,4 +297,45 @@ model HistoricoStatusPedido {
 
   @@index([pedidoId])
   @@map("historico_status_pedido")
+}
+
+model Cliente {
+  id                String            @id @default(uuid())
+  estabelecimentoId String            @map("estabelecimento_id")
+  nome              String
+  telefone          String
+  email             String?
+  senha             String?
+  cpf               String?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento   @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  enderecos       EnderecoCliente[]
+  comandas        Comanda[]
+
+  @@unique([estabelecimentoId, telefone])
+  @@map("clientes")
+}
+
+model EnderecoCliente {
+  id              String   @id @default(uuid())
+  clienteId       String   @map("cliente_id")
+  cep             String
+  logradouro      String
+  numero          String
+  complemento     String?
+  bairro          String
+  cidade          String
+  estado          String
+  referencia      String?
+  padrao          Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  comandas        Comanda[]
+
+  @@index([clienteId])
+  @@map("enderecos_cliente")
 }
