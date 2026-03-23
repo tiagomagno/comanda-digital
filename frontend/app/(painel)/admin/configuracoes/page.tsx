@@ -78,6 +78,7 @@ export default function ConfiguracoesPage() {
     const [buscandoCep, setBuscandoCep] = useState(false);
     const [cidades, setCidades] = useState<string[]>([]);
     const [loadingCidades, setLoadingCidades] = useState(false);
+    const [apiErrorCidades, setApiErrorCidades] = useState(false);
     const [showSenha, setShowSenha] = useState(false);
     const strength = calcPasswordStrength(data.senhaGestor);
     const [pendingChange, setPendingChange] = useState<{ field: keyof FormData; value: boolean } | null>(null);
@@ -153,6 +154,7 @@ export default function ConfiguracoesPage() {
     useEffect(() => {
         if (!data.estado) { setCidades([]); return; }
         setLoadingCidades(true);
+        setApiErrorCidades(false); // Reset error state on new fetch
         fetch(`https://brasilapi.com.br/api/ibge/municipios/v1/${data.estado}`)
             .then(res => {
                 if (!res.ok) throw new Error('Falha na BrasilAPI');
@@ -172,9 +174,16 @@ export default function ConfiguracoesPage() {
                     .sort((a: string, b: string) => a.localeCompare(b));
                     
                 setCidades(names);
+                setApiErrorCidades(false); // Clear error if successful
             })
-            .catch(() => toast.error('Erro ao carregar cidades'))
-            .finally(() => setLoadingCidades(false));
+            .catch(() => {
+                toast.error('Não foi possível carregar a lista de cidades. Você pode digitar o nome manualmente.');
+                setCidades([]);
+                setApiErrorCidades(true);
+            })
+            .finally(() => {
+                setLoadingCidades(false);
+            });
     }, [data.estado]);
 
     const onChange = (field: keyof FormData, value: string | boolean) => {
@@ -375,11 +384,18 @@ export default function ConfiguracoesPage() {
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Cidade {loadingCidades && <span className="text-xs font-normal text-[#FF5C01]">(Carregando...)</span>} <span className="text-red-500">*</span></label>
-                                    <select value={data.cidade} onChange={(e) => onChange('cidade', e.target.value)} disabled={loadingCidades || cidades.length === 0}
-                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none transition-all">
-                                        <option value="" disabled>Selecione...</option>
-                                        {cidades.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
-                                    </select>
+                                    {apiErrorCidades ? (
+                                        <input type="text" value={data.cidade}
+                                            onChange={(e) => onChange('cidade', e.target.value)}
+                                            placeholder="Digite o nome da cidade"
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none transition-all" />
+                                    ) : (
+                                        <select value={data.cidade} onChange={(e) => onChange('cidade', e.target.value)} disabled={loadingCidades || cidades.length === 0}
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none transition-all">
+                                            <option value="" disabled>Selecione...</option>
+                                            {cidades.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
+                                        </select>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Estado <span className="text-red-500">*</span></label>

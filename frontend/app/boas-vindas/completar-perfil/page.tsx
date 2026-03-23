@@ -215,6 +215,7 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
     const [buscandoCep, setBuscandoCep] = useState(false);
     const [cidades, setCidades] = useState<string[]>([]);
     const [loadingCidades, setLoadingCidades] = useState(false);
+    const [apiErrorCidades, setApiErrorCidades] = useState(false);
 
     useEffect(() => {
         if (!data.estado) {
@@ -223,6 +224,7 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
         }
         
         setLoadingCidades(true);
+        setApiErrorCidades(false);
         fetch(`https://brasilapi.com.br/api/ibge/municipios/v1/${data.estado}`)
             .then(async (res) => {
                 if (!res.ok) throw new Error('Falha na BrasilAPI');
@@ -246,8 +248,9 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
             })
             .catch((err) => {
                 console.error(err);
-                toast.error('Erro ao carregar cidades. Verifique sua conexão.');
+                toast.error('Ocorreu um erro ao carregar a lista de cidades. Você pode digitar o nome manualmente.');
                 setCidades([]);
+                setApiErrorCidades(true);
             })
             .finally(() => setLoadingCidades(false));
     }, [data.estado]);
@@ -369,16 +372,23 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="cidade">
                             Cidade {loadingCidades && <span className="text-xs font-normal text-[#FF5C01]">(Carregando...)</span>}
                         </label>
-                        <div className="relative">
-                            <select id="cidade" value={data.cidade}
+                        {apiErrorCidades ? (
+                            <input id="cidade" type="text" value={data.cidade}
                                 onChange={(e) => onChange('cidade', e.target.value)}
-                                disabled={loadingCidades || cidades.length === 0}
-                                className="w-full pl-4 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] text-gray-900 appearance-none outline-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
-                                <option value="" disabled>Selecione...</option>
-                                {cidades.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
-                            </select>
-                            <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xl">expand_more</span>
-                        </div>
+                                placeholder="Digite o nome da sua cidade"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] text-gray-900 transition-all outline-none" />
+                        ) : (
+                            <div className="relative">
+                                <select id="cidade" value={data.cidade}
+                                    onChange={(e) => onChange('cidade', e.target.value)}
+                                    disabled={loadingCidades || Object.keys(cidades).length === 0}
+                                    className="w-full pl-4 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] text-gray-900 appearance-none outline-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                    <option value="" disabled>Selecione...</option>
+                                    {cidades.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
+                                </select>
+                                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xl">expand_more</span>
+                            </div>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="estado">Estado</label>
