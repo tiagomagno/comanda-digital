@@ -14,6 +14,7 @@ export default function PainelLayout({
     const [userName, setUserName] = useState('Gestor');
     const [userRole, setUserRole] = useState('Painel');
     const [needsConfig, setNeedsConfig] = useState(false);
+    const [isDeliveryOnly, setIsDeliveryOnly] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -48,6 +49,13 @@ export default function PainelLayout({
                         cfg = typeof est?.configuracoes === 'string' ? JSON.parse(est.configuracoes) : (est?.configuracoes || {});
                     } catch (e) {
                         cfg = {};
+                    }
+                    
+                    const aceitaDelivery = cfg.aceitaDelivery ?? (est?.operaDelivery || false);
+                    const aceitaConsumoLocal = cfg.aceitaConsumoLocal ?? (est?.operaLocal || est?.operaHospedado || false);
+                    
+                    if (aceitaDelivery && !aceitaConsumoLocal) {
+                        setIsDeliveryOnly(true);
                     }
 
                     // Exibe nome do estabelecimento (nomeFantasia em configuracoes ou nome no banco)
@@ -94,7 +102,7 @@ export default function PainelLayout({
 
     return (
         <div className="min-h-screen flex bg-gray-50">
-            <PainelSidebar />
+            <PainelSidebar isDeliveryOnly={isDeliveryOnly} />
             <div className="flex-1 flex flex-col min-w-0">
                 <Header userName={userName} userRole={userRole} />
 

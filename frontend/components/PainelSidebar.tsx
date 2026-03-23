@@ -14,10 +14,12 @@ import {
     TrendingUp,
     Settings,
     Store,
+    ClipboardList,
+    Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const menu = [
+const getMenu = (isDeliveryOnly: boolean) => [
     {
         title: 'Visão geral',
         href: '/admin/dashboard',
@@ -30,20 +32,31 @@ const menu = [
         ],
     },
     {
-        section: 'Estabelecimento',
-        items: [
-            { title: 'Mesas e QR Code', href: '/admin/mesas', icon: QrCode },
-            { title: 'Usuários e Garçons', href: '/admin/usuarios', icon: Users },
-        ],
+        section: isDeliveryOnly ? 'Gestão' : 'Estabelecimento',
+        items: isDeliveryOnly
+            ? [
+                { title: 'Pedidos', href: '/admin/pedidos', icon: ClipboardList },
+            ]
+            : [
+                { title: 'Mesas e QR Code', href: '/admin/mesas', icon: QrCode },
+                { title: 'Usuários e Garçons', href: '/admin/usuarios', icon: Users },
+            ],
     },
     {
         section: 'Operação',
-        items: [
-            { title: 'Garçom', href: '/garcom', icon: UserCircle },
-            { title: 'Cozinha', href: '/cozinha', icon: ChefHat },
-            { title: 'Bar', href: '/bar', icon: Wine },
-            { title: 'Caixa', href: '/caixa', icon: DollarSign },
-        ],
+        items: isDeliveryOnly
+            ? [
+                { title: 'Entregadores', href: '/admin/entregadores', icon: Truck },
+                { title: 'Cozinha', href: '/cozinha', icon: ChefHat },
+                { title: 'Bar', href: '/bar', icon: Wine },
+                { title: 'Caixa', href: '/caixa', icon: DollarSign },
+            ]
+            : [
+                { title: 'Garçom', href: '/garcom', icon: UserCircle },
+                { title: 'Cozinha', href: '/cozinha', icon: ChefHat },
+                { title: 'Bar', href: '/bar', icon: Wine },
+                { title: 'Caixa', href: '/caixa', icon: DollarSign },
+            ],
     },
     {
         section: 'Sistema',
@@ -54,8 +67,9 @@ const menu = [
     },
 ];
 
-export default function PainelSidebar() {
+export default function PainelSidebar({ isDeliveryOnly = false }: { isDeliveryOnly?: boolean }) {
     const pathname = usePathname();
+    const menu = getMenu(isDeliveryOnly);
 
     const isActive = (href: string) => {
         if (href === '/admin/dashboard') return pathname === href;
