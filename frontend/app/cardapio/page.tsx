@@ -375,9 +375,16 @@ function CardapioPageContent() {
                 nome: i.produto.nome,
                 preco: i.produto.precoPromocional ?? i.produto.preco,
                 quantidade: i.quantidade,
+                imagemUrl: i.produto.imagemUrl,
             }))
         ));
-        router.push(`/pedido/confirmar?comanda=${comandaCodigo}`);
+        // Detectar modo de negócio do estabelecimento
+        const isDeliveryOnly = estabelecimento?.aceitaDelivery === true && estabelecimento?.aceitaConsumoLocal === false;
+        if (isDeliveryOnly) {
+            router.push(`/pedido/delivery?id=${estabelecimentoId}`);
+        } else {
+            router.push(`/pedido/confirmar?comanda=${comandaCodigo}`);
+        }
     };
 
     const categorias = ['todas', ...Array.from(new Set(produtos.map(p => p.categoria?.nome || 'Geral')))];
