@@ -5,8 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function ResetarSenhaPage() {
+function ResetarSenhaContent() {
     const searchParams = useSearchParams();
     const tokenFromUrl = searchParams.get('token');
 
@@ -229,5 +230,13 @@ export default function ResetarSenhaPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ResetarSenhaPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#FF5C01] border-t-transparent rounded-full animate-spin"></div></div>}>
+            <ResetarSenhaContent />
+        </Suspense>
     );
 }

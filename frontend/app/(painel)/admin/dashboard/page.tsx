@@ -105,10 +105,10 @@ export default function AdminDashboardPage() {
                             <p className="text-2xl font-bold text-gray-900 mt-1">
                                 R$ {stats?.receitaTotal.toLocaleString('pt-BR')}
                             </p>
-                            {stats?.receitaTotal > 0 && (
+                            {(stats?.receitaTotal ?? 0) > 0 && (
                                 <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
                                     <TrendingUp className="w-4 h-4" />
-                                    <span>—%</span>
+                                    <span>{"—"}%</span>
                                     <span className="text-gray-400">Comparado a ontem</span>
                                 </div>
                             )}
@@ -124,10 +124,10 @@ export default function AdminDashboardPage() {
                         <div>
                             <p className="text-sm font-medium text-gray-500">Comandas Ativas</p>
                             <p className="text-2xl font-bold text-gray-900 mt-1">{stats?.comandasAtivas}</p>
-                            {stats?.comandasAtivas > 0 && (
+                            {(stats?.comandasAtivas ?? 0) > 0 && (
                                 <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
                                     <TrendingUp className="w-4 h-4" />
-                                    <span>—%</span>
+                                    <span>{"—"}%</span>
                                     <span className="text-gray-400">Em tempo real</span>
                                 </div>
                             )}
@@ -143,10 +143,10 @@ export default function AdminDashboardPage() {
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total de Pedidos</p>
                             <p className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalPedidos}</p>
-                            {stats?.totalPedidos > 0 && (
+                            {(stats?.totalPedidos ?? 0) > 0 && (
                                 <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
                                     <TrendingUp className="w-4 h-4" />
-                                    <span>—%</span>
+                                    <span>{"—"}%</span>
                                     <span className="text-gray-400">Comparado a ontem</span>
                                 </div>
                             )}
@@ -164,10 +164,10 @@ export default function AdminDashboardPage() {
                             <p className="text-2xl font-bold text-gray-900 mt-1">
                                 R$ {stats?.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </p>
-                            {stats?.ticketMedio > 0 && (
+                            {(stats?.ticketMedio ?? 0) > 0 && (
                                 <div className="flex items-center gap-1 mt-2 text-red-600 text-sm">
                                     <TrendingDown className="w-4 h-4" />
-                                    <span>—%</span>
+                                    <span>{"—"}%</span>
                                     <span className="text-gray-400">Comparado a ontem</span>
                                 </div>
                             )}
