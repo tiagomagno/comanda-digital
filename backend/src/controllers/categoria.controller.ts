@@ -27,7 +27,11 @@ export const buscarCategoria = asyncHandler(async (req: AuthRequest, res: Respon
  * Criar nova categoria
  */
 export const criarCategoria = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const categoria = await categoriaService.criar(req.body);
+    const body = { ...req.body };
+    if (!body.estabelecimentoId && req.estabelecimentoId) {
+        body.estabelecimentoId = req.estabelecimentoId;
+    }
+    const categoria = await categoriaService.criar(body);
     res.status(201).json(categoria);
 });
 

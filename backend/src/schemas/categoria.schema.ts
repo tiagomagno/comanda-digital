@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 export const criarCategoriaSchema = z.object({
     body: z.object({
-        estabelecimentoId: z.string().uuid('ID do estabelecimento inválido'),
+        estabelecimentoId: z.string().uuid('ID do estabelecimento inválido').optional(),
         nome: z.string().min(1, 'Nome é obrigatório'),
         descricao: z.string().optional(),
         destino: z.enum(['BAR', 'COZINHA'], {
             errorMap: () => ({ message: 'Destino deve ser BAR ou COZINHA' }),
-        }),
+        }).default('COZINHA'),
         cor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Cor deve estar no formato hexadecimal').optional(),
         icone: z.string().optional(),
         ordem: z.number().int().optional(),

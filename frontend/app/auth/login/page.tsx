@@ -111,12 +111,20 @@ export default function LoginAdminPage() {
 
                         {/* Senha */}
                         <div>
-                            <label
-                                className="block text-sm font-semibold text-gray-700 mb-2"
-                                htmlFor="password"
-                            >
-                                Senha
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label
+                                    className="block text-sm font-semibold text-gray-700"
+                                    htmlFor="password"
+                                >
+                                    Senha
+                                </label>
+                                <Link
+                                    href="/auth/esqueci-senha"
+                                    className="text-sm text-[#FF5C01] hover:underline font-medium"
+                                >
+                                    Esqueci a senha
+                                </Link>
+                            </div>
                             <div className="relative">
                                 <input
                                     id="password"

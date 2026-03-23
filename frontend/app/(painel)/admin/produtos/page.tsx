@@ -78,7 +78,9 @@ export default function ProdutosPage() {
 
     // Categorias modal
     const [buscaCategoria, setBuscaCategoria] = useState('');
-    const [categoriaForm, setCategoriaForm] = useState({ nome: '' });
+    const [categoriaForm, setCategoriaForm] = useState<{ nome: string; destino: 'BAR' | 'COZINHA' }>({ nome: '', destino: 'COZINHA' });
+    const [showNovaCategoriaNoProduto, setShowNovaCategoriaNoProduto] = useState(false);
+    const [novaCategoriaNoProduto, setNovaCategoriaNoProduto] = useState({ nome: '', destino: 'COZINHA' as 'BAR' | 'COZINHA' });
 
     // Estado para modo edição no modal
     const [editandoProduto, setEditandoProduto] = useState<Produto | null>(null);
@@ -241,23 +243,91 @@ export default function ProdutosPage() {
         }
     };
 
-    const criarCategoria = (e: React.FormEvent) => {
+    const criarCategoria = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!categoriaForm.nome.trim()) return;
-        const nova: Categoria = { id: Date.now().toString(), nome: categoriaForm.nome.trim() };
-        setCategorias(prev => [...prev, nova]);
-        toast.success('Categoria criada!');
-        setCategoriaForm({ nome: '' });
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+            const headers: Record<string, string> = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            };
+            const payload = {
+                nome: categoriaForm.nome.trim(),
+                destino: categoriaForm.destino || 'COZINHA',
+                ...(estabelecimentoId && { estabelecimentoId }),
+            };
+            const res = await fetch(`${apiUrl}/api/categorias`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error?.message || err.message || 'Erro ao criar categoria');
+            }
+            const nova = await res.json();
+            setCategorias(prev => [...prev, { id: nova.id, nome: nova.nome }]);
+            toast.success('Categoria criada!');
+            setCategoriaForm({ nome: '', destino: 'COZINHA' });
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Erro ao criar categoria');
+        }
     };
 
-    const deletarCategoria = (id: string) => {
+    const criarCategoriaNoProduto = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!novaCategoriaNoProduto.nome.trim()) return;
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+            const res = await fetch(`${apiUrl}/api/categorias`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nome: novaCategoriaNoProduto.nome.trim(),
+                    destino: novaCategoriaNoProduto.destino,
+                    ...(estabelecimentoId && { estabelecimentoId }),
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error?.message || err.message || 'Erro ao criar categoria');
+            }
+            const nova = await res.json();
+            setCategorias(prev => [...prev, { id: nova.id, nome: nova.nome }]);
+            setFormData(prev => ({ ...prev, categoriaId: nova.id }));
+            setShowNovaCategoriaNoProduto(false);
+            setNovaCategoriaNoProduto({ nome: '', destino: 'COZINHA' });
+            toast.success('Categoria criada e selecionada!');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Erro ao criar categoria');
+        }
+    };
+
+    const deletarCategoria = async (id: string) => {
         const emUso = produtos.filter(p => p.categoria.id === id);
         if (emUso.length > 0) {
             toast.error(`${emUso.length} produto(s) usam esta categoria.`);
             return;
         }
-        setCategorias(prev => prev.filter(c => c.id !== id));
-        toast.success('Categoria excluída!');
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+            const res = await fetch(`${apiUrl}/api/categorias/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error('Erro ao excluir');
+            setCategorias(prev => prev.filter(c => c.id !== id));
+            toast.success('Categoria excluída!');
+        } catch {
+            toast.error('Erro ao excluir categoria.');
+        }
     };
 
     const toggleDisponivel = (id: string) => {
@@ -392,7 +462,8 @@ export default function ProdutosPage() {
                     {/* Separador */}
                     <span className="w-px h-5 bg-gray-200 mx-2" />
 
-                    {/* Importar — link simples */}
+                    {/* Importar — link simples (Removido temporariamente) */}
+                    {/* 
                     <Link
                         href="/admin/produtos/importar"
                         className="flex items-center gap-1.5 px-3 py-2 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
@@ -400,13 +471,12 @@ export default function ProdutosPage() {
                         <Upload className="w-[15px] h-[15px]" />
                         Importar
                     </Link>
-
-                    {/* Separador */}
                     <span className="w-px h-5 bg-gray-200 mx-2" />
+                    */}
 
                     {/* Novo Produto */}
                     <button
-                        onClick={() => { setEditandoProduto(null); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' }); setShowModal(true); }}
+                        onClick={() => { setEditandoProduto(null); setShowNovaCategoriaNoProduto(false); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' }); setShowModal(true); }}
                         className="ml-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FF5C01] text-white font-semibold hover:bg-[#e05101] transition-colors shadow-sm text-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -911,15 +981,23 @@ export default function ProdutosPage() {
                             {/* Nova categoria */}
                             <div className="px-6 pt-4">
                                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Nova Categoria</p>
-                                <form onSubmit={criarCategoria} className="flex gap-2">
+                                <form onSubmit={criarCategoria} className="flex flex-col sm:flex-row gap-2">
                                     <input
                                         type="text"
                                         required
                                         value={categoriaForm.nome}
-                                        onChange={e => setCategoriaForm({ nome: e.target.value })}
+                                        onChange={e => setCategoriaForm(prev => ({ ...prev, nome: e.target.value }))}
                                         placeholder="Ex: Sobremesas, Bebidas..."
                                         className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all"
                                     />
+                                    <select
+                                        value={categoriaForm.destino}
+                                        onChange={e => setCategoriaForm(prev => ({ ...prev, destino: e.target.value as 'BAR' | 'COZINHA' }))}
+                                        className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 bg-white"
+                                    >
+                                        <option value="COZINHA">Cozinha</option>
+                                        <option value="BAR">Bar</option>
+                                    </select>
                                     <button
                                         type="submit"
                                         className="w-10 h-10 rounded-full bg-[#FF5C01] text-white flex items-center justify-center hover:bg-[#e05101] transition-colors shadow-sm shrink-0"
@@ -1027,14 +1105,52 @@ export default function ProdutosPage() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoria *</label>
-                                        <select required value={formData.categoriaId}
-                                            onChange={e => setFormData({ ...formData, categoriaId: e.target.value })}
+                                        <select required={!showNovaCategoriaNoProduto} value={showNovaCategoriaNoProduto ? '' : formData.categoriaId}
+                                            onChange={e => {
+                                                const v = e.target.value;
+                                                if (v === '__nova__') {
+                                                    setShowNovaCategoriaNoProduto(true);
+                                                    setFormData(prev => ({ ...prev, categoriaId: '' }));
+                                                } else {
+                                                    setShowNovaCategoriaNoProduto(false);
+                                                    setFormData(prev => ({ ...prev, categoriaId: v }));
+                                                }
+                                            }}
                                             className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30 focus:border-[#FF5C01] transition-all bg-white">
                                             <option value="">Selecione uma categoria</option>
                                             {categorias.map(cat => (
                                                 <option key={cat.id} value={cat.id}>{cat.nome}</option>
                                             ))}
+                                            <option value="__nova__">+ Criar nova categoria</option>
                                         </select>
+                                        {showNovaCategoriaNoProduto && (
+                                            <form onSubmit={criarCategoriaNoProduto} className="mt-3 p-3 bg-gray-50 rounded-xl space-y-2">
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={novaCategoriaNoProduto.nome}
+                                                    onChange={e => setNovaCategoriaNoProduto(prev => ({ ...prev, nome: e.target.value }))}
+                                                    placeholder="Nome da nova categoria"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#FF5C01]/30"
+                                                />
+                                                <div className="flex gap-2 items-center">
+                                                    <select
+                                                        value={novaCategoriaNoProduto.destino}
+                                                        onChange={e => setNovaCategoriaNoProduto(prev => ({ ...prev, destino: e.target.value as 'BAR' | 'COZINHA' }))}
+                                                        className="px-4 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+                                                    >
+                                                        <option value="COZINHA">Cozinha</option>
+                                                        <option value="BAR">Bar</option>
+                                                    </select>
+                                                    <button type="submit" className="px-4 py-2 bg-[#FF5C01] text-white rounded-lg text-sm font-medium hover:bg-[#e05101]">
+                                                        Criar
+                                                    </button>
+                                                    <button type="button" onClick={() => setShowNovaCategoriaNoProduto(false)} className="text-gray-500 hover:text-gray-700 text-sm">
+                                                        Cancelar
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
                                     </div>
 
                                     <div>
@@ -1104,7 +1220,7 @@ export default function ProdutosPage() {
 
                             <div className="p-6 pt-4 border-t border-gray-100 flex gap-3">
                                 <button type="button"
-                                    onClick={() => { setShowModal(false); setEditandoProduto(null); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' }); }}
+                                    onClick={() => { setShowModal(false); setEditandoProduto(null); setShowNovaCategoriaNoProduto(false); setFormData({ codigo: '', nome: '', descricao: '', preco: '', precoPromocional: '', categoriaId: '', destaque: false, videoUrl: '', imagemUrl: '' }); }}
                                     className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
                                     Cancelar
                                 </button>

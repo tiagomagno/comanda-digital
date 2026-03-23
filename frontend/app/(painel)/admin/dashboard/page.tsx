@@ -105,11 +105,13 @@ export default function AdminDashboardPage() {
                             <p className="text-2xl font-bold text-gray-900 mt-1">
                                 R$ {stats?.receitaTotal.toLocaleString('pt-BR')}
                             </p>
-                            <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
-                                <TrendingUp className="w-4 h-4" />
-                                <span>10%</span>
-                                <span className="text-gray-400">Comparado a ontem</span>
-                            </div>
+                            {stats?.receitaTotal > 0 && (
+                                <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span>—%</span>
+                                    <span className="text-gray-400">Comparado a ontem</span>
+                                </div>
+                            )}
                         </div>
                         <div className="p-2 rounded-lg bg-orange-100">
                             <BarChart3 className="w-6 h-6 text-orange-600" />
@@ -122,11 +124,13 @@ export default function AdminDashboardPage() {
                         <div>
                             <p className="text-sm font-medium text-gray-500">Comandas Ativas</p>
                             <p className="text-2xl font-bold text-gray-900 mt-1">{stats?.comandasAtivas}</p>
-                            <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
-                                <TrendingUp className="w-4 h-4" />
-                                <span>5%</span>
-                                <span className="text-gray-400">Em tempo real</span>
-                            </div>
+                            {stats?.comandasAtivas > 0 && (
+                                <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span>—%</span>
+                                    <span className="text-gray-400">Em tempo real</span>
+                                </div>
+                            )}
                         </div>
                         <div className="p-2 rounded-lg bg-blue-100">
                             <Receipt className="w-6 h-6 text-blue-600" />
@@ -139,11 +143,13 @@ export default function AdminDashboardPage() {
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total de Pedidos</p>
                             <p className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalPedidos}</p>
-                            <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
-                                <TrendingUp className="w-4 h-4" />
-                                <span>20%</span>
-                                <span className="text-gray-400">Comparado a ontem</span>
-                            </div>
+                            {stats?.totalPedidos > 0 && (
+                                <div className="flex items-center gap-1 mt-2 text-green-600 text-sm">
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span>—%</span>
+                                    <span className="text-gray-400">Comparado a ontem</span>
+                                </div>
+                            )}
                         </div>
                         <div className="p-2 rounded-lg bg-green-100">
                             <ShoppingBag className="w-6 h-6 text-green-600" />
@@ -158,11 +164,13 @@ export default function AdminDashboardPage() {
                             <p className="text-2xl font-bold text-gray-900 mt-1">
                                 R$ {stats?.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </p>
-                            <div className="flex items-center gap-1 mt-2 text-red-600 text-sm">
-                                <TrendingDown className="w-4 h-4" />
-                                <span>2%</span>
-                                <span className="text-gray-400">Comparado a ontem</span>
-                            </div>
+                            {stats?.ticketMedio > 0 && (
+                                <div className="flex items-center gap-1 mt-2 text-red-600 text-sm">
+                                    <TrendingDown className="w-4 h-4" />
+                                    <span>—%</span>
+                                    <span className="text-gray-400">Comparado a ontem</span>
+                                </div>
+                            )}
                         </div>
                         <div className="p-2 rounded-lg bg-amber-100">
                             <Receipt className="w-6 h-6 text-amber-600" />
@@ -203,26 +211,35 @@ export default function AdminDashboardPage() {
                         </button>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <div className="w-32 h-32 rounded-full border-8 border-gray-200 border-t-green-500 border-r-orange-500 border-b-red-400 flex items-center justify-center shrink-0">
+                        <div className={`w-32 h-32 rounded-full border-8 flex items-center justify-center shrink-0 ${(stats?.receitaTotal ?? 0) > 0
+                                ? 'border-gray-200 border-t-green-500 border-r-orange-500 border-b-red-400'
+                                : 'border-gray-200'
+                            }`}>
                             <div className="text-center">
-                                <p className="text-lg font-bold text-gray-900">R$ 200K</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    R$ {(stats?.receitaTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </p>
                                 <p className="text-xs text-gray-500">Receita Total</p>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2 text-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-green-500" />
-                                <span>Comida</span>
+                        {(stats?.receitaTotal ?? 0) > 0 ? (
+                            <div className="flex flex-col gap-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3 h-3 rounded-full bg-green-500" />
+                                    <span>Comida</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3 h-3 rounded-full bg-red-500" />
+                                    <span>Bebida</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3 h-3 rounded-full bg-orange-500" />
+                                    <span>Outros</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-red-500" />
-                                <span>Bebida</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-orange-500" />
-                                <span>Outros</span>
-                            </div>
-                        </div>
+                        ) : (
+                            <p className="text-sm text-gray-400">Sem dados para exibir</p>
+                        )}
                     </div>
                 </div>
             </div>

@@ -37,6 +37,24 @@ export const onboarding = asyncHandler(async (req: AuthRequest, res: Response) =
 });
 
 /**
+ * Solicitar recuperação de senha
+ */
+export const forgotPassword = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email } = req.body;
+    const resultado = await authService.forgotPassword(email);
+    res.json(resultado);
+});
+
+/**
+ * Redefinir senha com token
+ */
+export const resetPassword = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { token, novaSenha } = req.body;
+    const resultado = await authService.resetPassword(token, novaSenha);
+    res.json(resultado);
+});
+
+/**
  * Atualizar configuração do logado (estabelecimento + usuário)
  */
 export const updateEstabelecimento = asyncHandler(async (req: AuthRequest, res: Response) => {

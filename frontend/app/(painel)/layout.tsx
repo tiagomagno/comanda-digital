@@ -43,7 +43,12 @@ export default function PainelLayout({
                     // Os dados podem vir das colunas diretas do banco OU do JSON `configuracoes`
                     // (salvo via endpoint /api/auth/me/estabelecimento)
                     const est = data.estabelecimento;
-                    const cfg = (est?.configuracoes && typeof est.configuracoes === 'object') ? est.configuracoes : {};
+                    let cfg: any = {};
+                    try {
+                        cfg = typeof est?.configuracoes === 'string' ? JSON.parse(est.configuracoes) : (est?.configuracoes || {});
+                    } catch (e) {
+                        cfg = {};
+                    }
 
                     // Exibe nome do estabelecimento (nomeFantasia em configuracoes ou nome no banco)
                     const nomeExibicao = cfg.nomeFantasia || est?.nome || '';
@@ -54,7 +59,7 @@ export default function PainelLayout({
 
                     // Dados do Negócio
                     const temNomeFantasia = str(cfg.nomeFantasia) || str(est?.nome);
-                    const temCnpj = str(est?.cnpj) || str(cfg.cnpj);
+                    // Retirado temCnpj da checagem obrigatória pois o form não tem required
 
                     // Endereço e Contato
                     const temCep = str(est?.cep) || str(cfg.cep);
@@ -67,7 +72,6 @@ export default function PainelLayout({
 
                     const isFullyConfigured =
                         temNomeFantasia &&
-                        temCnpj &&
                         temCep &&
                         temLogradouro &&
                         temNumero &&

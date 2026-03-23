@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Upload, Link2, FileText, CheckCircle2, AlertCircle,
@@ -33,6 +33,11 @@ const PLATAFORMAS = [
 export default function ImportarPage() {
     const router = useRouter();
     const fileRef = useRef<HTMLInputElement>(null);
+
+    // ── Redirecionamento provisório (Módulo bloqueado) ──
+    useEffect(() => {
+        router.replace('/admin/produtos');
+    }, [router]);
 
     const [step, setStep] = useState<Step>('metodo');
     const [metodo, setMetodo] = useState<Metodo>('url');

@@ -101,7 +101,12 @@ export default function ConfiguracoesPage() {
                     const userData = await response.json();
                     const est = userData.estabelecimento || {};
                     // Campos extras ficam no JSON `configuracoes`
-                    const cfg = (est.configuracoes && typeof est.configuracoes === 'object') ? est.configuracoes : {};
+                    let cfg: any = {};
+                    try {
+                        cfg = typeof est.configuracoes === 'string' ? JSON.parse(est.configuracoes) : (est.configuracoes || {});
+                    } catch (e) {
+                        cfg = {};
+                    }
 
                     setFormData(prev => ({
                         ...prev,
@@ -148,10 +153,14 @@ export default function ConfiguracoesPage() {
     useEffect(() => {
         if (!data.estado) { setCidades([]); return; }
         setLoadingCidades(true);
-        fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${data.estado}/municipios`)
-            .then(res => res.json())
+        fetch(`https://brasilapi.com.br/api/ibge/municipios/v1/${data.estado}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Falha na BrasilAPI');
+                return res.json();
+            })
             .then(json => {
-                const names = json.map((m: any) => m.nome);
+                if (!Array.isArray(json)) throw new Error('Formato inválido');
+                const names = json.map((m: any) => m.nome).sort((a: string, b: string) => a.localeCompare(b));
                 setCidades(names);
             })
             .catch(() => toast.error('Erro ao carregar cidades'))

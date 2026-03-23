@@ -27,6 +27,19 @@ export const meSchema = z.object({
     // Sem body/params, apenas valida autenticação via middleware
 });
 
+export const forgotPasswordSchema = z.object({
+    body: z.object({
+        email: z.string().email('E-mail inválido'),
+    }),
+});
+
+export const resetPasswordSchema = z.object({
+    body: z.object({
+        token: z.string().min(1, 'Token é obrigatório'),
+        novaSenha: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres'),
+    }),
+});
+
 export const onboardingSchema = z.object({
     body: z.object({
         // Dados do estabelecimento

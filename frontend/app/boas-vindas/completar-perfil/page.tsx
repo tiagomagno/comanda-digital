@@ -223,13 +223,13 @@ function Step2({ data, onChange, onNext, onBack }: Step2Props) {
         }
         
         setLoadingCidades(true);
-        fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${data.estado}/municipios`)
+        fetch(`https://brasilapi.com.br/api/ibge/municipios/v1/${data.estado}`)
             .then(async (res) => {
-                if (!res.ok) throw new Error('Falha na API do IBGE');
+                if (!res.ok) throw new Error('Falha na BrasilAPI');
                 return res.json();
             })
             .then((json) => {
-                if (!Array.isArray(json)) throw new Error('Formato inválido do IBGE');
+                if (!Array.isArray(json)) throw new Error('Formato inválido da BrasilAPI');
                 
                 const names = json
                     .map((m: any) => m.nome)
@@ -1168,14 +1168,36 @@ export default function CompletarPerfilPage() {
                     setUser(data);
 
                     const est = data.estabelecimento || {};
+                    let cfg: any = {};
+                    try {
+                        cfg = typeof est.configuracoes === 'string' ? JSON.parse(est.configuracoes) : (est.configuracoes || {});
+                    } catch (e) {
+                        cfg = {};
+                    }
+                    
                     setFormData(prev => ({
                         ...prev,
                         nomeGestor: data.nome || '',
                         emailGestor: data.email || '',
-                        nomeFantasia: est.nome || '',
+                        nomeFantasia: cfg.nomeFantasia || est.nome || '',
+                        razaoSocial: cfg.razaoSocial || '',
+                        cnpj: est.cnpj || '',
+                        cep: est.cep || '',
+                        cidade: est.cidade || '',
+                        estado: est.estado || 'SP',
                         telefoneComercial: est.telefone || '',
-                        aceitaConsumoLocal: est.operaLocal || est.operaHospedado || false,
-                        aceitaDelivery: est.operaDelivery || false,
+                        logradouro: cfg.logradouro || '',
+                        numero: cfg.numero || '',
+                        bairro: cfg.bairro || '',
+                        complemento: cfg.complemento || '',
+                        instagram: cfg.instagram || '',
+                        aceitaConsumoLocal: cfg.aceitaConsumoLocal ?? (est.operaLocal || est.operaHospedado || false),
+                        aceitaDelivery: cfg.aceitaDelivery ?? (est.operaDelivery || false),
+                        aceitaRetirada: cfg.aceitaRetirada ?? true,
+                        raioEntrega: cfg.raioEntrega || '5',
+                        tempoMedioEntrega: cfg.tempoMedioEntrega || '45',
+                        horarioSegSex: cfg.horarioSegSex || '10:00 - 23:00',
+                        horarioSabDom: cfg.horarioSabDom || '11:00 - 00:00',
                     }));
                 } else {
                     localStorage.removeItem('token');

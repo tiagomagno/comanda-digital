@@ -373,6 +373,60 @@ export class AuthService {
 
         return { message: 'Estabelecimento atualizado com sucesso', estabelecimento: result };
     }
+
+    /**
+     * Solicitar recuperação de senha (gera token de reset)
+     * Apenas gestores (admin com email/senha) podem usar
+     */
+    async forgotPassword(email: string) {
+        const usuario = await prisma.usuario.findUnique({
+            where: { email },
+        });
+
+        // Sempre retornar sucesso para não expor se o email existe
+        if (!usuario || !usuario.senhaHash || usuario.tipo !== 'admin') {
+            return { message: 'Se o e-mail estiver cadastrado, você receberá as instruções.' };
+        }
+
+        const resetToken = jwt.sign(
+            { userId: usuario.id, purpose: 'reset-password' },
+            process.env.JWT_SECRET || 'fallback',
+            { expiresIn: '1h' }
+        );
+
+        logger.info('Token de reset gerado', { userId: usuario.id });
+
+        return {
+            message: 'Se o e-mail estiver cadastrado, você receberá as instruções.',
+            resetToken, // Em produção, enviar por e-mail. Aqui retornamos para desenvolvimento.
+        };
+    }
+
+    /**
+     * Redefinir senha usando token de reset
+     */
+    async resetPassword(token: string, novaSenha: string) {
+        let payload: { userId?: string; purpose?: string };
+        try {
+            payload = jwt.verify(token, process.env.JWT_SECRET || 'fallback') as any;
+        } catch {
+            throw new BadRequestError('Link de recuperação inválido ou expirado. Solicite novamente.');
+        }
+
+        if (payload.purpose !== 'reset-password' || !payload.userId) {
+            throw new BadRequestError('Token inválido.');
+        }
+
+        const senhaHash = await bcrypt.hash(novaSenha, 10);
+        await prisma.usuario.update({
+            where: { id: payload.userId },
+            data: { senhaHash },
+        });
+
+        logger.info('Senha redefinida com sucesso', { userId: payload.userId });
+
+        return { message: 'Senha redefinida com sucesso. Você já pode fazer login.' };
+    }
 }
 
 export const authService = new AuthService();
