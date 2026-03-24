@@ -67,6 +67,7 @@ enum TipoUsuario {
   cozinha
   bar
   admin
+  superadmin
 }
 
 model Mesa {

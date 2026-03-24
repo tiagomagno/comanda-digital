@@ -59,3 +59,4 @@ export const requireGestor = requireRole('admin');
 export const requireGarcom = requireRole('garcom', 'admin');
 export const requireCozinha = requireRole('cozinha', 'bar', 'admin');
 export const requireCaixa = requireRole('admin'); // Por enquanto, apenas admin pode ser caixa
+export const requireSuperAdmin = requireRole('superadmin');
