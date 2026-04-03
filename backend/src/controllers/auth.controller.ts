@@ -64,3 +64,19 @@ export const updateEstabelecimento = asyncHandler(async (req: AuthRequest, res: 
     res.json(resultado);
 });
 
+/**
+ * Criar Pré-Cadastro (Lead da Landing Page)
+ */
+export const preCadastro = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const resultado = await authService.preCadastro(req.body);
+    res.status(201).json(resultado);
+});
+
+/**
+ * Buscar Cadastro pré-criado pelo Token
+ */
+export const buscarLead = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { token } = req.params;
+    const resultado = await authService.buscarLeadPorToken(token);
+    res.json(resultado);
+});

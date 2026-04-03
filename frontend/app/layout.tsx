@@ -22,7 +22,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="pt-BR">
+        <html lang="pt-BR" className="dark">
             <head>
                 <link
                     href="https://api.fontshare.com/v2/css?f[]=lufga@300,400,500,600,700&display=swap"

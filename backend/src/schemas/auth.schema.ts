@@ -42,6 +42,7 @@ export const resetPasswordSchema = z.object({
 
 export const onboardingSchema = z.object({
     body: z.object({
+        leadToken: z.string().uuid().optional(),
         // Dados do estabelecimento
         estabelecimento: z.object({
             nome: z.string().min(2, 'Nome do estabelecimento obrigatório'),
@@ -57,5 +58,15 @@ export const onboardingSchema = z.object({
             email: z.string().email('Email inválido'),
             senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
         }),
+    }),
+});
+
+export const preCadastroSchema = z.object({
+    body: z.object({
+        nomeEstabelecimento: z.string().min(2, 'Nome do estabelecimento obrigatório'),
+        nomeGestor: z.string().optional(),
+        email: z.string().email('Email inválido'),
+        telefone: z.string().optional(),
+        planoId: z.string().optional(),
     }),
 });

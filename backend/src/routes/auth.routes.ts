@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as authController from '../controllers/auth.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
-import { loginSchema, registerSchema, onboardingSchema, forgotPasswordSchema, resetPasswordSchema } from '../schemas/auth.schema.js';
+import { loginSchema, registerSchema, onboardingSchema, forgotPasswordSchema, resetPasswordSchema, preCadastroSchema } from '../schemas/auth.schema.js';
 
 const router = Router();
 
@@ -55,5 +55,18 @@ router.get('/me', authMiddleware as any, authController.me as any);
  */
 router.put('/me/estabelecimento', authMiddleware as any, authController.updateEstabelecimento as any);
 
-export default router;
+/**
+ * @route POST /api/auth/pre-cadastro
+ * @desc Iniciar o fluxo da landing page (Lead/Pré-Cadastro)
+ * @access Public
+ */
+router.post('/pre-cadastro', validate(preCadastroSchema), authController.preCadastro as any);
 
+/**
+ * @route GET /api/auth/pre-cadastro/:token
+ * @desc Buscar dados de um Lead/Pré-Cadastro pelo Token para pré-preencher onboarding
+ * @access Public
+ */
+router.get('/pre-cadastro/:token', authController.buscarLead as any);
+
+export default router;

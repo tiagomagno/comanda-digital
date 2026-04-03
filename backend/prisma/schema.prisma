@@ -30,12 +30,14 @@ model Estabelecimento {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  usuarios   Usuario[]
-  categorias Categoria[]
-  comandas   Comanda[]
-  mesas      Mesa[]
-  GrupoMesa  GrupoMesa[]
-  clientes   Cliente[]
+  usuarios           Usuario[]
+  categorias         Categoria[]
+  comandas           Comanda[]
+  mesas              Mesa[]
+  GrupoMesa          GrupoMesa[]
+  clientes           Cliente[]
+  assinatura         Assinatura?
+  credenciaisGateway CredencialGateway[]
 
   @@map("estabelecimentos")
 }
@@ -189,12 +191,12 @@ model Comanda {
   enderecoEntregaId String?         @map("endereco_entrega_id")
   taxaEntrega       Decimal         @default(0) @map("taxa_entrega") @db.Decimal(10, 2)
 
-  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
-  mesaRelacao     Mesa?           @relation(fields: [mesaId], references: [id])
+  estabelecimento Estabelecimento  @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  mesaRelacao     Mesa?            @relation(fields: [mesaId], references: [id])
   pedidos         Pedido[]
-  GrupoMesa       GrupoMesa?      @relation(fields: [grupoMesaId], references: [id])
+  GrupoMesa       GrupoMesa?       @relation(fields: [grupoMesaId], references: [id])
   grupoMesaId     String?
-  cliente         Cliente?        @relation(fields: [clienteId], references: [id])
+  cliente         Cliente?         @relation(fields: [clienteId], references: [id])
   enderecoEntrega EnderecoCliente? @relation(fields: [enderecoEntregaId], references: [id])
 
   @@index([estabelecimentoId])
@@ -301,15 +303,15 @@ model HistoricoStatusPedido {
 }
 
 model Cliente {
-  id                String            @id @default(uuid())
-  estabelecimentoId String            @map("estabelecimento_id")
+  id                String   @id @default(uuid())
+  estabelecimentoId String   @map("estabelecimento_id")
   nome              String
   telefone          String
   email             String?
   senha             String?
   cpf               String?
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   estabelecimento Estabelecimento   @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   enderecos       EnderecoCliente[]
@@ -320,23 +322,113 @@ model Cliente {
 }
 
 model EnderecoCliente {
-  id              String   @id @default(uuid())
-  clienteId       String   @map("cliente_id")
-  cep             String
-  logradouro      String
-  numero          String
-  complemento     String?
-  bairro          String
-  cidade          String
-  estado          String
-  referencia      String?
-  padrao          Boolean  @default(false)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  clienteId   String   @map("cliente_id")
+  cep         String
+  logradouro  String
+  numero      String
+  complemento String?
+  bairro      String
+  cidade      String
+  estado      String
+  referencia  String?
+  padrao      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  comandas        Comanda[]
+  cliente  Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  comandas Comanda[]
 
   @@index([clienteId])
   @@map("enderecos_cliente")
+}
+
+// -------------------------------------------------------------
+// SAAS & FINANCEIRO (Biling e Transacional BYOG)
+// -------------------------------------------------------------
+
+model Plano {
+  id            String   @id @default(uuid())
+  nome          String
+  stripePriceId String?  @map("stripe_price_id")
+  preco         Decimal  @db.Decimal(10, 2)
+  features      Json     @default("{}")
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  assinaturas Assinatura[]
+
+  @@map("planos")
+}
+
+model Assinatura {
+  id                   String           @id @default(uuid())
+  estabelecimentoId    String           @unique @map("estabelecimento_id")
+  planoId              String           @map("plano_id")
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  status               StatusAssinatura @default(trialing)
+  trialEndsAt          DateTime?        @map("trial_ends_at")
+  currentPeriodEnd     DateTime?        @map("current_period_end")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  plano           Plano           @relation(fields: [planoId], references: [id], onDelete: Restrict)
+
+  @@index([estabelecimentoId])
+  @@index([planoId])
+  @@map("assinaturas")
+}
+
+enum StatusAssinatura {
+  trialing
+  active
+  past_due
+  canceled
+  incomplete
+  incomplete_expired
+  unpaid
+  paused
+}
+
+model CredencialGateway {
+  id                String          @id @default(uuid())
+  estabelecimentoId String          @map("estabelecimento_id")
+  provedor          ProvedorGateway
+  publicKey         String?         @map("public_key")
+  secretKey         String?         @map("secret_key")
+  webhookSecret     String?         @map("webhook_secret")
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+
+  @@unique([estabelecimentoId, provedor])
+  @@map("credenciais_gateway")
+}
+
+enum ProvedorGateway {
+  mercadopago
+  pagarme
+  asaas
+  stripe
+}
+
+model PreCadastroLead {
+  id                  String   @id @default(uuid())
+  nomeEstabelecimento String   @map("nome_estabelecimento")
+  nomeGestor          String?  @map("nome_gestor")
+  email               String   @unique
+  telefone            String?
+  planoId             String?  @map("plano_id") // ID guardado caso ele esclha na landing page
+  token               String   @unique @default(uuid())
+  convertido          Boolean  @default(false)
+  utmSource           String?  @map("utm_source")
+  utmCampaign         String?  @map("utm_campaign")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("pre_cadastro_leads")
 }

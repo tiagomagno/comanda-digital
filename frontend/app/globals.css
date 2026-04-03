@@ -4,19 +4,51 @@
 
 @layer base {
     :root {
-        --background: #F4F4F6;
-        --foreground: #020306;
+        --background: #131313;
+        --foreground: #e5e2e1;
         --primary: #FF5C01;
         --muted: #B9B9B9;
     }
 
+
     body {
-        @apply bg-[#F4F4F6] text-[#020306];
+        @apply bg-[#131313] text-[#e5e2e1] font-sans;
     }
 }
 
 @layer utilities {
     .text-balance {
         text-wrap: balance;
+    }
+}
+
+@layer components {
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-card {
+        background: rgba(53, 53, 52, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 92, 1, 0.1);
+    }
+    .glass-input {
+        background: rgba(14, 14, 14, 0.6);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(91, 65, 55, 0.2);
+    }
+    .signature-glow {
+        box-shadow: 0px 4px 20px rgba(255, 92, 1, 0.4);
+    }
+    .neon-glow {
+        box-shadow: 0px 0px 24px rgba(255, 92, 1, 0.5), 0px 4px 20px rgba(255, 92, 1, 0.3);
+    }
+    .orange-text-glow {
+        text-shadow: 0 0 15px rgba(255, 92, 1, 0.3);
+    }
+    .text-glow-sm {
+        text-shadow: 0 0 8px rgba(255, 92, 1, 0.2);
+    }
+    .hero-gradient {
+        background: radial-gradient(circle at 70% 30%, rgba(255, 92, 1, 0.15) 0%, transparent 50%);
     }
 }

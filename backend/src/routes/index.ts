@@ -14,6 +14,8 @@ import clienteRoutes from './cliente.routes.js';
 import importarRoutes from './importar.routes.js';
 import uploadRoutes from './upload.routes.js';
 import superAdminRoutes from './superadmin.routes.js';
+import assinaturaRoutes from './assinatura.routes.js';
+import gatewayRoutes from './gateway.routes.js';
 import prisma from '../config/database.js';
 import bcrypt from 'bcryptjs';
 
@@ -63,6 +65,12 @@ router.use('/upload', uploadRoutes);
 
 // Rotas do Super Admin (plataforma)
 router.use('/superadmin', superAdminRoutes);
+
+// Rotas de Assinatura (SaaS)
+router.use('/assinaturas', assinaturaRoutes);
+
+// Rotas do Gateway BYOG
+router.use('/gateways', gatewayRoutes);
 
 import { logger } from '../utils/logger.js';
 import { asyncHandler } from '../middlewares/error.middleware.js';

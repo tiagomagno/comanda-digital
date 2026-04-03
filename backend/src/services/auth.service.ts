@@ -18,6 +18,7 @@ interface RegisterDTO {
 }
 
 interface OnboardingDTO {
+    leadToken?: string;
     estabelecimento: {
         nome: string;
         operaLocal?: boolean;
@@ -33,7 +34,64 @@ interface OnboardingDTO {
     };
 }
 
+interface PreCadastroDTO {
+    nomeEstabelecimento: string;
+    nomeGestor?: string;
+    email: string;
+    telefone?: string;
+    planoId?: string;
+}
+
 export class AuthService {
+    /**
+     * Criar Pré-Cadastro (Lead)
+     */
+    async preCadastro(data: PreCadastroDTO) {
+        logger.info('Novo pré-cadastro', { email: data.email });
+        
+        let lead = await prisma.preCadastroLead.findUnique({
+            where: { email: data.email }
+        });
+
+        if (lead) {
+            lead = await prisma.preCadastroLead.update({
+                where: { email: data.email },
+                data: {
+                    nomeEstabelecimento: data.nomeEstabelecimento,
+                    nomeGestor: data.nomeGestor,
+                    telefone: data.telefone,
+                    planoId: data.planoId,
+                }
+            });
+        } else {
+            lead = await prisma.preCadastroLead.create({
+                data: {
+                    nomeEstabelecimento: data.nomeEstabelecimento,
+                    nomeGestor: data.nomeGestor,
+                    email: data.email,
+                    telefone: data.telefone,
+                    planoId: data.planoId,
+                }
+            });
+        }
+
+        return { token: lead.token };
+    }
+
+    /**
+     * Buscar Pré-Cadastro pelo Token
+     */
+    async buscarLeadPorToken(token: string) {
+        const lead = await prisma.preCadastroLead.findUnique({
+            where: { token }
+        });
+
+        if (!lead) {
+            throw new NotFoundError('Lead não encontrado ou token inválido');
+        }
+
+        return lead;
+    }
     /**
      * Gerar token JWT
      */
@@ -251,6 +309,15 @@ export class AuthService {
             data: operacionais,
             skipDuplicates: true,
         });
+
+        // Marcar lead como convertido, se aplicável
+        if (data.leadToken) {
+            await prisma.preCadastroLead.updateMany({
+                where: { token: data.leadToken },
+                data: { convertido: true }
+            });
+            logger.info('Lead convertido no onboarding', { token: data.leadToken });
+        }
 
         // Gerar token para auto-login do gestor
         const token = this.gerarToken(gestor);
