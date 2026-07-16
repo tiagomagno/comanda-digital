@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -38,8 +38,43 @@ model Estabelecimento {
   clientes           Cliente[]
   assinatura         Assinatura?
   credenciaisGateway CredencialGateway[]
+  avaliacoes         Avaliacao[]
+  filasEspera        FilaEspera[]
+  reservas           Reserva[]
+  cupons             Cupom[]
+  regrasAutomacao    RegraAutomacao[]
+  canaisExternos     CanalExterno[]
 
   @@map("estabelecimentos")
+}
+
+model Cupom {
+  id                String    @id @default(uuid())
+  estabelecimentoId String    @map("estabelecimento_id")
+  codigo            String
+  descricao         String?
+  tipo              TipoCupom
+  valor             Decimal   @db.Decimal(10, 2)
+  valorMinimo       Decimal?  @map("valor_minimo") @db.Decimal(10, 2)
+  usoMaximo         Int?      @map("uso_maximo")
+  usoAtual          Int       @default(0) @map("uso_atual")
+  ativo             Boolean   @default(true)
+  dataInicio        DateTime? @map("data_inicio")
+  dataFim           DateTime? @map("data_fim")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  comandas        Comanda[]
+
+  @@unique([estabelecimentoId, codigo])
+  @@index([estabelecimentoId])
+  @@map("cupons")
+}
+
+enum TipoCupom {
+  percentual
+  fixo
 }
 
 model Usuario {
@@ -51,13 +86,17 @@ model Usuario {
   senhaHash         String?     @map("senha_hash")
   codigoAcesso      String?     @unique @map("codigo_acesso")
   tipo              TipoUsuario
-  ativo             Boolean     @default(true)
-  ultimoAcesso      DateTime?   @map("ultimo_acesso")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
+  ativo                Boolean           @default(true)
+  statusEntregador     StatusEntregador? @map("status_entregador")
+  ultimoAcesso         DateTime?         @map("ultimo_acesso")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
 
-  estabelecimento Estabelecimento?        @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
-  historicoStatus HistoricoStatusPedido[]
+  estabelecimento        Estabelecimento?        @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  historicoStatus        HistoricoStatusPedido[]
+  avaliacoesRecebidas    Avaliacao[]
+  corridasComoEntregador Corrida[]               @relation("EntregadorCorridas")
+  localizacoes           LocalizacaoEntregador[]
 
   @@map("usuarios")
 }
@@ -70,6 +109,13 @@ enum TipoUsuario {
   bar
   admin
   superadmin
+}
+
+enum StatusEntregador {
+  offline
+  online
+  pausado
+  em_corrida
 }
 
 model Mesa {
@@ -162,10 +208,56 @@ model Produto {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  categoria   Categoria    @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
-  pedidoItens PedidoItem[]
+  categoria       Categoria       @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  pedidoItens     PedidoItem[]
+  adicionalGrupos AdicionalGrupo[]
 
   @@map("produtos")
+}
+
+model AdicionalGrupo {
+  id          String  @id @default(uuid())
+  produtoId   String  @map("produto_id")
+  nome        String
+  obrigatorio Boolean @default(false)
+  minSelecoes Int     @default(0) @map("min_selecoes")
+  maxSelecoes Int     @default(1) @map("max_selecoes")
+  ordem       Int     @default(0)
+
+  produto Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  opcoes  Adicional[]
+
+  @@index([produtoId])
+  @@map("adicional_grupos")
+}
+
+model Adicional {
+  id         String  @id @default(uuid())
+  grupoId    String  @map("grupo_id")
+  nome       String
+  preco      Decimal @default(0) @db.Decimal(10, 2)
+  disponivel Boolean @default(true)
+  ordem      Int     @default(0)
+
+  grupo       AdicionalGrupo       @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  pedidoItens PedidoItemAdicional[]
+
+  @@index([grupoId])
+  @@map("adicionais")
+}
+
+model PedidoItemAdicional {
+  id           String   @id @default(uuid())
+  pedidoItemId String   @map("pedido_item_id")
+  adicionalId  String   @map("adicional_id")
+  preco        Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  pedidoItem PedidoItem @relation(fields: [pedidoItemId], references: [id], onDelete: Cascade)
+  adicional  Adicional  @relation(fields: [adicionalId], references: [id], onDelete: Restrict)
+
+  @@index([pedidoItemId])
+  @@map("pedido_item_adicionais")
 }
 
 model Comanda {
@@ -182,7 +274,7 @@ model Comanda {
   status            StatusComanda   @default(ativa)
   totalEstimado     Decimal         @default(0) @map("total_estimado") @db.Decimal(10, 2)
   observacoes       String?
-  qrCodeUrl         String?         @map("qr_code_url") @db.LongText
+  qrCodeUrl         String?         @map("qr_code_url") @db.Text
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
   finalizadaAt      DateTime?       @map("finalizada_at")
@@ -190,6 +282,9 @@ model Comanda {
   clienteId         String?         @map("cliente_id")
   enderecoEntregaId String?         @map("endereco_entrega_id")
   taxaEntrega       Decimal         @default(0) @map("taxa_entrega") @db.Decimal(10, 2)
+  metodoPagamento   String?         @map("metodo_pagamento") // pix | dinheiro | cartao_credito | cartao_debito
+  cupomId           String?         @map("cupom_id")
+  desconto          Decimal         @default(0) @db.Decimal(10, 2)
 
   estabelecimento Estabelecimento  @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   mesaRelacao     Mesa?            @relation(fields: [mesaId], references: [id])
@@ -198,6 +293,12 @@ model Comanda {
   grupoMesaId     String?
   cliente         Cliente?         @relation(fields: [clienteId], references: [id])
   enderecoEntrega EnderecoCliente? @relation(fields: [enderecoEntregaId], references: [id])
+  pagamentosParciais PagamentoParcial[]
+  avaliacao       Avaliacao?
+  cupom           Cupom?           @relation(fields: [cupomId], references: [id])
+  transacoes      Transacao[]
+  corrida         Corrida?
+  pedidosExternos PedidoExterno[]
 
   @@index([estabelecimentoId])
   @@index([mesaId])
@@ -243,12 +344,14 @@ model Pedido {
   pagoAt          DateTime?         @map("pago_at")
   emPreparoAt     DateTime?         @map("em_preparo_at")
   prontoAt        DateTime?         @map("pronto_at")
+  emExpedicaoAt   DateTime?         @map("em_expedicao_at")
   entregueAt      DateTime?         @map("entregue_at")
   canceladoAt     DateTime?         @map("cancelado_at")
 
-  comanda   Comanda                 @relation(fields: [comandaId], references: [id], onDelete: Cascade)
-  itens     PedidoItem[]
-  historico HistoricoStatusPedido[]
+  comanda    Comanda                 @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  itens      PedidoItem[]
+  historico  HistoricoStatusPedido[]
+  transacoes Transacao[]
 
   @@unique([comandaId, numeroPedido])
   @@index([comandaId])
@@ -264,6 +367,7 @@ enum StatusPedido {
   pago
   em_preparo
   pronto
+  em_expedicao
   entregue
   cancelado
 }
@@ -278,8 +382,9 @@ model PedidoItem {
   observacoes   String?
   createdAt     DateTime @default(now()) @map("created_at")
 
-  pedido  Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  pedido    Pedido               @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto   Produto              @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  adicionais PedidoItemAdicional[]
 
   @@index([pedidoId])
   @@index([produtoId])
@@ -432,3 +537,287 @@ model PreCadastroLead {
 
   @@map("pre_cadastro_leads")
 }
+
+// -------------------------------------------------------------
+// DELIVERY — CORRIDAS E LOCALIZAÇÃO
+// -------------------------------------------------------------
+
+model Corrida {
+  id           String        @id @default(uuid())
+  comandaId    String        @unique @map("comanda_id")
+  entregadorId String        @map("entregador_id")
+  status       StatusCorrida @default(oferecida)
+  observacoes  String?       @db.Text
+  oferecidaAt  DateTime      @default(now()) @map("oferecida_at")
+  aceitaAt     DateTime?     @map("aceita_at")
+  emColetaAt   DateTime?     @map("em_coleta_at")
+  coletadaAt   DateTime?     @map("coletada_at")
+  emEntregaAt  DateTime?     @map("em_entrega_at")
+  entregaAt    DateTime?     @map("entrega_at")
+  canceladaAt  DateTime?     @map("cancelada_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  comanda    Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  entregador Usuario  @relation("EntregadorCorridas", fields: [entregadorId], references: [id], onDelete: Restrict)
+
+  @@index([entregadorId])
+  @@index([status])
+  @@map("corridas")
+}
+
+enum StatusCorrida {
+  oferecida
+  aceita
+  recusada
+  em_coleta
+  coletada
+  em_entrega
+  entregue
+  cancelada
+}
+
+model LocalizacaoEntregador {
+  id           String   @id @default(uuid())
+  entregadorId String   @map("entregador_id")
+  lat          Decimal  @db.Decimal(10, 7)
+  lng          Decimal  @db.Decimal(10, 7)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  entregador Usuario @relation(fields: [entregadorId], references: [id], onDelete: Cascade)
+
+  @@index([entregadorId])
+  @@map("localizacao_entregadores")
+}
+
+// -------------------------------------------------------------
+// TRANSAÇÕES DE PAGAMENTO
+// -------------------------------------------------------------
+
+model Transacao {
+  id           String          @id @default(uuid())
+  comandaId    String          @map("comanda_id")
+  pedidoId     String?         @map("pedido_id") // setado = cobra 1 pedido (imediato); nulo = cobra a comanda inteira (final)
+  valor        Decimal         @db.Decimal(10, 2)
+  status       StatusTransacao @default(pendente)
+  metodo       String?         // pix | cartao_credito | cartao_debito | dinheiro
+  provedor     String?         // mercadopago | pagarme | manual | stripe
+  providerId   String?         @map("provider_id")   // ID da transação no gateway
+  observacao   String?         @db.Text
+  criadoAt     DateTime        @default(now()) @map("criado_at")
+  atualizadoAt DateTime        @updatedAt @map("atualizado_at")
+
+  comanda Comanda @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  pedido  Pedido? @relation(fields: [pedidoId], references: [id], onDelete: SetNull)
+
+  @@index([comandaId])
+  @@index([status])
+  @@index([providerId])
+  @@index([pedidoId])
+  @@map("transacoes")
+}
+
+enum StatusTransacao {
+  pendente
+  processando
+  pago
+  falhou
+  reembolsado
+  cancelado
+  chargeback
+}
+
+// -------------------------------------------------------------
+// FASE 1: DIVISÃO DE CONTA E AVALIAÇÃO
+// -------------------------------------------------------------
+
+model PagamentoParcial {
+  id              String   @id @default(uuid())
+  comandaId       String   @map("comanda_id")
+  telefoneCliente String   @map("telefone_cliente")
+  nomeCliente     String?  @map("nome_cliente") 
+  valor           Decimal  @db.Decimal(10, 2)
+  metodoPagamento String?  @map("metodo_pagamento")
+  status          StatusPagamentoParcial @default(pendente)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  comanda Comanda @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+
+  @@index([comandaId])
+  @@map("pagamentos_parciais")
+}
+
+enum StatusPagamentoParcial {
+  pendente
+  pago
+  erro
+}
+
+model Avaliacao {
+  id                String   @id @default(uuid())
+  comandaId         String   @unique @map("comanda_id")
+  estabelecimentoId String   @map("estabelecimento_id")
+  usuarioId         String?  @map("usuario_id")
+  notaAtendimento   Int      @map("nota_atendimento")
+  notaComida        Int      @map("nota_comida")
+  comentario        String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  comanda         Comanda         @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  usuario         Usuario?        @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([comandaId])
+  @@index([estabelecimentoId])
+  @@index([usuarioId])
+  @@map("avaliacoes")
+}
+
+// -------------------------------------------------------------
+// CANAIS OMNICHANNEL
+// -------------------------------------------------------------
+
+model CanalExterno {
+  id                String      @id @default(uuid())
+  estabelecimentoId String      @map("estabelecimento_id")
+  nome              String
+  tipo              TipoCanal
+  webhookSecret     String?     @map("webhook_secret")
+  configuracoes     Json        @default("{}")
+  ativo             Boolean     @default(true)
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  pedidosExternos PedidoExterno[]
+
+  @@index([estabelecimentoId])
+  @@map("canais_externos")
+}
+
+enum TipoCanal {
+  whatsapp
+  ifood
+  rappi
+  instagram
+  site_proprio
+  telefone
+  generico
+}
+
+model PedidoExterno {
+  id                String   @id @default(uuid())
+  canalId           String   @map("canal_id")
+  comandaId         String?  @map("comanda_id")
+  externalId        String?  @map("external_id")
+  status            String   @default("recebido") // recebido | processado | erro | ignorado
+  payload           Json
+  erroMensagem      String?  @map("erro_mensagem") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  canal   CanalExterno @relation(fields: [canalId], references: [id], onDelete: Cascade)
+  comanda Comanda?     @relation(fields: [comandaId], references: [id])
+
+  @@index([canalId])
+  @@index([externalId])
+  @@map("pedidos_externos")
+}
+
+// -------------------------------------------------------------
+// AUTOMAÇÃO DE MARKETING
+// -------------------------------------------------------------
+
+model RegraAutomacao {
+  id                String        @id @default(uuid())
+  estabelecimentoId String        @map("estabelecimento_id")
+  nome              String
+  tipo              TipoAutomacao
+  delayMinutos      Int           @default(30) @map("delay_minutos")
+  diasInatividade   Int?          @map("dias_inatividade")
+  acao              Json          // { tipo: 'avaliacao' | 'cupom' | 'mensagem', cupomCodigo?: string, mensagem?: string }
+  ativo             Boolean       @default(true)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento    @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  execucoes       ExecucaoAutomacao[]
+
+  @@index([estabelecimentoId])
+  @@map("regras_automacao")
+}
+
+enum TipoAutomacao {
+  apos_entrega
+  cliente_inativo
+}
+
+model ExecucaoAutomacao {
+  id         String   @id @default(uuid())
+  regraId    String   @map("regra_id")
+  referencia String   // comandaId ou clienteId
+  status     String   @default("pendente") // pendente | executado | erro
+  resultado  Json?
+  criadoAt   DateTime @default(now()) @map("criado_at")
+
+  regra RegraAutomacao @relation(fields: [regraId], references: [id], onDelete: Cascade)
+
+  @@index([regraId])
+  @@index([referencia])
+  @@map("execucoes_automacao")
+}
+
+// -------------------------------------------------------------
+// FASE 2: GESTÃO DE RECEPÇÃO E RESERVAS
+// -------------------------------------------------------------
+
+model FilaEspera {
+  id                String   @id @default(uuid())
+  estabelecimentoId String   @map("estabelecimento_id")
+  nomeCliente       String   @map("nome_cliente")
+  telefone          String?
+  quantidadePessoas Int      @map("quantidade_pessoas")
+  status            StatusFilaEspera @default(aguardando)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+
+  @@index([estabelecimentoId])
+  @@index([status])
+  @@map("filas_espera")
+}
+
+enum StatusFilaEspera {
+  aguardando
+  chamado
+  sentado
+  cancelado
+}
+
+model Reserva {
+  id                String   @id @default(uuid())
+  estabelecimentoId String   @map("estabelecimento_id")
+  nomeCliente       String   @map("nome_cliente")
+  telefone          String
+  quantidadePessoas Int      @map("quantidade_pessoas")
+  dataHora          DateTime @map("data_hora")
+  observacoes       String?  @db.Text
+  status            StatusReserva @default(pendente)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+
+  @@index([estabelecimentoId])
+  @@index([dataHora])
+  @@index([status])
+  @@map("reservas")
+}
+
+enum StatusReserva {
+  pendente
+  confirmada
+  cancelada
+  concluida
+}
+
