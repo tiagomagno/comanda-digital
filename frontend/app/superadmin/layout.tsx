@@ -138,7 +138,7 @@ export default function SuperAdminLayout({
                         {navigation.find(n => pathname.startsWith(n.href))?.name || 'Super Admin'}
                     </h2>
                     <div className="text-sm text-gray-500 font-medium">
-                        Ambiente de Gerenciamento da Plataforma Comanda Digital
+                        Ambiente de Gerenciamento da Plataforma DINE
                     </div>
                 </header>
                 <main className="flex-1 overflow-auto p-8">

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function BoasVindasPage() {
     const router = useRouter();
@@ -50,7 +51,7 @@ export default function BoasVindasPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-[#FF5C01] border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-[#e9463c] border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -66,12 +67,7 @@ export default function BoasVindasPage() {
         <div className="min-h-screen bg-[#F8F9FA] font-sans">
             {/* Header */}
             <header className="w-full bg-[#fdfdfd] px-8 py-4 flex items-center justify-between shadow-sm border-b border-gray-100">
-                <div className="flex items-center gap-2 text-[#0B241E]">
-                    <div className="w-8 h-8 bg-[#feefe6] rounded-lg flex items-center justify-center text-[#FF5C01] shadow-sm">
-                        <span className="material-symbols-outlined text-lg">restaurant</span>
-                    </div>
-                    <span className="font-bold text-lg tracking-wide font-display text-gray-900">Comanda Digital</span>
-                </div>
+                <Image src="/logos/logo-dine-horizontal.svg" alt="DINE Gestão Gastronômica" width={130} height={34} priority />
                 <div className="flex items-center gap-6">
                     {user && (
                         <div className="hidden sm:flex items-center gap-3">
@@ -79,7 +75,7 @@ export default function BoasVindasPage() {
                                 <p className="text-sm font-bold text-gray-900">{user.estabelecimento?.nome || 'Meu Negócio'}</p>
                                 <p className="text-xs text-gray-500">{user.nome}</p>
                             </div>
-                            <div className="w-9 h-9 rounded-full bg-[#FF5C01]/10 text-[#FF5C01] font-bold flex items-center justify-center text-sm border border-[#FF5C01]/20">
+                            <div className="w-9 h-9 rounded-full bg-[#e9463c]/10 text-[#e9463c] font-bold flex items-center justify-center text-sm border border-[#e9463c]/20">
                                 {user.nome?.charAt(0).toUpperCase() || 'U'}
                             </div>
                         </div>
@@ -131,7 +127,7 @@ export default function BoasVindasPage() {
                                     <p className="text-sm text-gray-500 font-light mb-4">Adicione o endereço, logomarca e demais informações do seu estabelecimento.</p>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); router.push('/boas-vindas/completar-perfil'); }}
-                                        className="bg-[#FF5C01] hover:bg-[#e05101] text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors flex items-center justify-center shadow-sm"
+                                        className="bg-[#e9463c] hover:bg-[#c93830] text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors flex items-center justify-center shadow-sm"
                                     >
                                         Continuar
                                     </button>
@@ -242,7 +238,7 @@ export default function BoasVindasPage() {
                                 <span className="text-[#FF5C01] font-bold text-sm">10%</span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-2 mb-5 overflow-hidden">
-                                <div className="bg-[#FF5C01] h-full rounded-full" style={{ width: '10%' }}></div>
+                                <div className="bg-[#e9463c] h-full rounded-full" style={{ width: '10%' }}></div>
                             </div>
                             <p className="text-[13px] text-gray-500 font-light leading-relaxed mb-6">
                                 Complete seu perfil para começar a vender. Faltam poucos passos!
@@ -250,7 +246,7 @@ export default function BoasVindasPage() {
 
                             <ul className="space-y-4">
                                 <li className="flex gap-3 items-center">
-                                    <div className="w-5 h-5 rounded-full bg-[#FF5C01] flex items-center justify-center text-white shrink-0">
+                                    <div className="w-5 h-5 rounded-full bg-[#e9463c] flex items-center justify-center text-white shrink-0">
                                         <span className="material-symbols-outlined text-[14px]">check</span>
                                     </div>
                                     <span className="text-sm text-gray-400 line-through">Criar conta</span>

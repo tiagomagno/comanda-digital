@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 interface FormData {
@@ -604,12 +605,12 @@ function StepPlaceholder({ title, subtitle, onBack, onNext, isLast = false, isLo
 function SidebarStep1() {
     return (
         <div className="relative z-10 flex flex-col items-center text-center px-8 gap-5">
-            <div className="w-16 h-16 bg-[#FF5C01] rounded-2xl flex items-center justify-center shadow-xl">
-                <span className="material-symbols-outlined text-white text-3xl">restaurant_menu</span>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden bg-white/10">
+                <Image src="/logos/simbol-dine.svg" alt="DINE" width={48} height={48} />
             </div>
             <div>
-                <p className="text-white font-bold text-2xl">Comanda Digital</p>
-                <p className="text-white/50 text-sm mt-1">Gestão Inteligente para Restaurantes</p>
+                <p className="text-white font-bold text-2xl">DINE</p>
+                <p className="text-white/50 text-sm mt-1">Gestão Gastronômica</p>
             </div>
             <div className="mt-2 flex flex-col gap-3 w-full text-left">
                 {[
@@ -972,7 +973,7 @@ function Step5({ data, onChange, onNext, onBack, isLoading }: Step5Props) {
             <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-6">
                 <div className="h-48 overflow-y-auto pr-2 text-sm text-gray-600 leading-relaxed space-y-4 scrollbar-thin">
                     <p className="font-bold text-gray-900 text-base">1. Introdução</p>
-                    <p>Bem-vindo à Comanda Digital. Estes Termos de Uso regulam o acesso e utilização da nossa plataforma SaaS. Ao criar uma conta, você concorda com o tratamento de seus dados pessoais conforme descrito em nossa Política de Privacidade.</p>
+                    <p>Bem-vindo à DINE Gestão Gastronômica. Estes Termos de Uso regulam o acesso e utilização da nossa plataforma SaaS. Ao criar uma conta, você concorda com o tratamento de seus dados pessoais conforme descrito em nossa Política de Privacidade.</p>
                     <p className="font-bold text-gray-900 text-base">2. Dados e Privacidade (LGPD)</p>
                     <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD), garantimos transparência sobre como coletamos, usamos e protegemos suas informações. Seus dados serão utilizados apenas para fins de prestação de serviço e melhoria da experiência do usuário.</p>
                     <p className="font-bold text-gray-900 text-base">3. Responsabilidades do Usuário</p>
@@ -1132,7 +1133,7 @@ function StepSuccess() {
                         <span className="text-xl md:text-2xl font-semibold text-slate-600 block mt-2">Sua conta foi configurada com sucesso</span>
                     </h1>
                     <p className="text-slate-500 text-base md:text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-                        Bem-vindo ao Comanda Digital. Agora você já pode começar a usar o painel e revolucionar sua operação.
+                        Bem-vindo ao DINE. Agora você já pode começar a usar o painel e revolucionar sua operação.
                     </p>
 
                     {/* Action Card Section */}
@@ -1274,7 +1275,7 @@ export default function CompletarPerfilPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-[#FF5C01] border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-[#e9463c] border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -1284,12 +1285,7 @@ export default function CompletarPerfilPage() {
 
             {/* Header (Layout Boas-Vindas) */}
             <header className="w-full bg-[#fdfdfd] px-8 py-4 flex items-center justify-between shadow-sm border-b border-gray-100 shrink-0">
-                <div className="flex items-center gap-2 text-[#0B241E]">
-                    <div className="w-8 h-8 bg-[#feefe6] rounded-lg flex items-center justify-center text-[#FF5C01] shadow-sm">
-                        <span className="material-symbols-outlined text-lg">restaurant</span>
-                    </div>
-                    <span className="font-bold text-lg tracking-wide font-display text-gray-900">Comanda Digital</span>
-                </div>
+                <Image src="/logos/logo-dine-horizontal.svg" alt="DINE Gestão Gastronômica" width={130} height={34} priority />
                 <div className="flex items-center gap-6">
                     {user && (
                         <div className="hidden sm:flex items-center gap-3">
@@ -1343,7 +1339,7 @@ export default function CompletarPerfilPage() {
                 )}
 
                 <p className="text-xs text-gray-400 text-center mt-8">
-                    © 2025 Comanda Digital. Todos os direitos reservados.
+                    © {new Date().getFullYear()} DINE Gestão Gastronômica. Todos os direitos reservados.
                 </p>
             </main>
 

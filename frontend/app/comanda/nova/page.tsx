@@ -1,10 +1,13 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import PaymentChoice from '@/components/PaymentChoice';
+import Image from 'next/image';
+
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +32,7 @@ function NovaComandaContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const mesaUrl = searchParams.get('mesa');
+    const estabelecimentoId = searchParams.get('estabelecimentoId');
 
     // --- Estado geral ---
     const [dark, setDark] = useState(false);
@@ -55,16 +59,20 @@ function NovaComandaContent() {
     };
 
     const handleSubmitCliente = async (formaPagamento: 'imediato' | 'final') => {
+        if (!estabelecimentoId) {
+            toast.error('Link inválido: estabelecimento não identificado. Escaneie o QR Code novamente.');
+            return;
+        }
         setLoadingCliente(true);
         try {
-            const response = await fetch('http://localhost:3001/api/comandas', {
+            const response = await fetch(`${config.apiUrl}/comandas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nomeCliente: formCliente.nomeCliente,
                     telefoneCliente: formCliente.telefoneCliente,
                     formaPagamento,
-                    estabelecimentoId: 'estab-seed-001',
+                    estabelecimentoId,
                 }),
             });
             const data = await response.json();
@@ -93,7 +101,7 @@ function NovaComandaContent() {
         e.preventDefault();
         setLoadingAdmin(true);
         try {
-            const response = await fetch('http://localhost:3001/api/auth/login', {
+            const response = await fetch(`${config.apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formAdmin),
@@ -130,12 +138,7 @@ function NovaComandaContent() {
 
                         {/* ── Header ──────────────────────────────────────── */}
                         <div className="flex flex-col items-center mb-8">
-                            <div className="w-16 h-16 bg-[#FF5C01]/10 flex items-center justify-center rounded-2xl mb-4">
-                                <span className="material-icons-round text-[#FF5C01] text-4xl">restaurant_menu</span>
-                            </div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                                Comanda Digital
-                            </h1>
+                            <Image src="/logos/logo-dine-horizontal.svg" alt="DINE Gestão Gastronômica" width={130} height={34} priority />
                             <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
                                 {tab === 'cliente'
                                     ? stepCliente === 'dados' ? 'Crie sua comanda para começar' : 'Escolha como deseja pagar'
@@ -150,7 +153,7 @@ function NovaComandaContent() {
                                     id="btn-tab-cliente"
                                     onClick={() => setTab('cliente')}
                                     className={`flex-1 py-2.5 text-sm font-medium rounded-lg tab-transition ${tab === 'cliente'
-                                        ? 'bg-white dark:bg-slate-700 text-[#FF5C01] shadow-sm'
+                                        ? 'bg-white dark:bg-slate-700 text-[#e9463c] shadow-sm'
                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                         }`}
                                 >
@@ -160,7 +163,7 @@ function NovaComandaContent() {
                                     id="btn-tab-admin"
                                     onClick={() => setTab('admin')}
                                     className={`flex-1 py-2.5 text-sm font-medium rounded-lg tab-transition ${tab === 'admin'
-                                        ? 'bg-white dark:bg-slate-700 text-[#FF5C01] shadow-sm'
+                                        ? 'bg-white dark:bg-slate-700 text-[#e9463c] shadow-sm'
                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                         }`}
                                 >
@@ -191,7 +194,7 @@ function NovaComandaContent() {
                                                     value={formCliente.nomeCliente}
                                                     onChange={(e) => setFormCliente({ ...formCliente, nomeCliente: e.target.value })}
                                                     placeholder="Ex: João Silva"
-                                                    className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] transition-all outline-none text-sm"
+                                                    className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#e9463c]/20 focus:border-[#e9463c] transition-all outline-none text-sm"
                                                 />
                                             </div>
                                         </div>
@@ -214,7 +217,7 @@ function NovaComandaContent() {
                                                     maxLength={15}
                                                     placeholder="(11) 98765-4321"
                                                     inputMode="numeric"
-                                                    className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] transition-all outline-none text-sm"
+                                                    className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#e9463c]/20 focus:border-[#e9463c] transition-all outline-none text-sm"
                                                 />
                                             </div>
                                         </div>
@@ -226,7 +229,7 @@ function NovaComandaContent() {
                                         <button
                                             onClick={handleContinuarParaPagamento as unknown as React.MouseEventHandler}
                                             disabled={!formCliente.nomeCliente || !formCliente.telefoneCliente}
-                                            className="w-full mt-2 bg-[#FF5C01] hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#FF5C01]/25 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2"
+                                            className="w-full mt-2 bg-[#e9463c] hover:bg-[#c93830] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#e9463c]/25 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2"
                                         >
                                             <span className="material-icons-round">arrow_forward</span>
                                             Continuar
@@ -239,7 +242,7 @@ function NovaComandaContent() {
                                     <div>
                                         <button
                                             onClick={() => setStepCliente('dados')}
-                                            className="mb-6 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-[#FF5C01] transition-colors"
+                                            className="mb-6 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-[#e9463c] transition-colors"
                                         >
                                             <span className="material-icons-round text-base">arrow_back</span>
                                             Voltar
@@ -275,7 +278,7 @@ function NovaComandaContent() {
                                             value={formAdmin.email}
                                             onChange={(e) => setFormAdmin({ ...formAdmin, email: e.target.value })}
                                             placeholder="admin@exemplo.com"
-                                            className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] transition-all outline-none text-sm"
+                                            className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#e9463c]/20 focus:border-[#e9463c] transition-all outline-none text-sm"
                                         />
                                     </div>
                                 </div>
@@ -288,7 +291,7 @@ function NovaComandaContent() {
                                         </label>
                                         <Link
                                             href="#"
-                                            className="text-xs font-semibold text-[#FF5C01] hover:text-orange-600 transition-colors"
+                                            className="text-xs font-semibold text-[#e9463c] hover:text-orange-600 transition-colors"
                                         >
                                             Esqueceu a senha?
                                         </Link>
@@ -304,7 +307,7 @@ function NovaComandaContent() {
                                             value={formAdmin.senha}
                                             onChange={(e) => setFormAdmin({ ...formAdmin, senha: e.target.value })}
                                             placeholder="••••••••"
-                                            className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] transition-all outline-none text-sm"
+                                            className="block w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-[#e9463c]/20 focus:border-[#e9463c] transition-all outline-none text-sm"
                                         />
                                     </div>
                                 </div>
@@ -312,7 +315,7 @@ function NovaComandaContent() {
                                 <button
                                     type="submit"
                                     disabled={loadingAdmin}
-                                    className="w-full mt-6 bg-[#FF5C01] hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#FF5C01]/25 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2"
+                                    className="w-full mt-6 bg-[#e9463c] hover:bg-[#c93830] disabled:opacity-50 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#e9463c]/25 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2"
                                 >
                                     {loadingAdmin ? (
                                         <>

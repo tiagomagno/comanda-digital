@@ -1,4 +1,5 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -64,7 +65,7 @@ function CarrinhoContent() {
         try {
             const comandaId = localStorage.getItem('comandaId');
 
-            const response = await fetch('http://localhost:3001/api/pedidos', {
+            const response = await fetch(`${config.apiUrl}/pedidos`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -185,17 +186,9 @@ function CarrinhoContent() {
                         <div className="bg-white rounded-lg shadow p-4">
                             <h3 className="font-semibold text-gray-900 mb-3">Resumo do Pedido</h3>
                             <div className="space-y-2">
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal</span>
-                                    <span>R$ {calcularSubtotal().toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Taxa de serviço (10%)</span>
-                                    <span>R$ {(calcularSubtotal() * 0.1).toFixed(2)}</span>
-                                </div>
                                 <div className="border-t pt-2 flex justify-between text-xl font-bold text-gray-900">
                                     <span>Total</span>
-                                    <span>R$ {(calcularSubtotal() * 1.1).toFixed(2)}</span>
+                                    <span>R$ {calcularSubtotal().toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -220,7 +213,7 @@ function CarrinhoContent() {
                             ) : (
                                 <>
                                     Finalizar Pedido
-                                    <span>R$ {(calcularSubtotal() * 1.1).toFixed(2)}</span>
+                                    <span>R$ {calcularSubtotal().toFixed(2)}</span>
                                 </>
                             )}
                         </button>

@@ -1,8 +1,9 @@
 'use client';
 
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, FileText, TrendingUp, RefreshCw, X } from 'lucide-react';
+import { DollarSign, FileText, TrendingUp, RefreshCw, X, CreditCard, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -37,6 +38,11 @@ export default function CaixaPage() {
     const [loading, setLoading] = useState(true);
     const [modalComanda, setModalComanda] = useState<Comanda | null>(null);
     const [metodoPagamento, setMetodoPagamento] = useState('');
+
+    // Transações
+    const [transacoesComanda, setTransacoesComanda] = useState<Comanda | null>(null);
+    const [transacoes, setTransacoes] = useState<any[]>([]);
+    const [loadingTransacoes, setLoadingTransacoes] = useState(false);
 
     useEffect(() => {
         carregarComandas();
@@ -91,11 +97,17 @@ export default function CaixaPage() {
             });
 
             if (response.ok) {
+                // Registra transação formal
+                const total = modalComanda.totalCalculado || Number(modalComanda.totalEstimado);
+                await registrarTransacao(modalComanda.id, total, metodoPagamento, 'pago');
                 toast.success('Pagamento processado com sucesso!');
                 setModalComanda(null);
                 setMetodoPagamento('');
                 carregarComandas();
             } else {
+                // Registra tentativa falha para histórico
+                const total = modalComanda.totalCalculado || Number(modalComanda.totalEstimado);
+                await registrarTransacao(modalComanda.id, total, metodoPagamento, 'falhou');
                 toast.error('Erro ao processar pagamento');
             }
         } catch (error) {
@@ -104,13 +116,67 @@ export default function CaixaPage() {
         }
     };
 
+    const token = () => localStorage.getItem('token');
+
+    const abrirTransacoes = async (comanda: Comanda) => {
+        setTransacoesComanda(comanda);
+        setLoadingTransacoes(true);
+        try {
+            const res = await fetch(`${BASE_URL}/api/transacoes/${comanda.id}`, {
+                headers: { 'Authorization': `Bearer ${token()}` },
+            });
+            if (res.ok) setTransacoes(await res.json());
+        } catch { toast.error('Erro ao carregar transações'); }
+        finally { setLoadingTransacoes(false); }
+    };
+
+    const registrarTransacao = async (comandaId: string, valor: number, metodo: string, status = 'pago') => {
+        const res = await fetch(`${BASE_URL}/api/transacoes`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comandaId, valor, metodo, status, provedor: 'manual' }),
+        });
+        return res.ok ? res.json() : null;
+    };
+
+    const atualizarTransacao = async (id: string, status: string) => {
+        const res = await fetch(`${BASE_URL}/api/transacoes/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+        });
+        if (res.ok) {
+            const atualizada = await res.json();
+            setTransacoes(prev => prev.map(t => t.id === id ? atualizada : t));
+            toast.success(`Transação marcada como ${status}`);
+        }
+    };
+
+    const statusBadge = (status: string) => {
+        const map: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
+            pendente:    { label: 'Pendente',    cls: 'bg-gray-100 text-gray-600',   icon: <Clock className="w-3 h-3" /> },
+            processando: { label: 'Processando', cls: 'bg-blue-100 text-blue-700',   icon: <Clock className="w-3 h-3" /> },
+            pago:        { label: 'Pago',        cls: 'bg-green-100 text-green-700', icon: <CheckCircle className="w-3 h-3" /> },
+            falhou:      { label: 'Falhou',      cls: 'bg-red-100 text-red-700',     icon: <XCircle className="w-3 h-3" /> },
+            reembolsado: { label: 'Reembolsado', cls: 'bg-amber-100 text-amber-700', icon: <RotateCcw className="w-3 h-3" /> },
+            cancelado:   { label: 'Cancelado',   cls: 'bg-gray-100 text-gray-500',   icon: <XCircle className="w-3 h-3" /> },
+            chargeback:  { label: 'Chargeback',  cls: 'bg-purple-100 text-purple-700', icon: <AlertCircle className="w-3 h-3" /> },
+        };
+        const cfg = map[status] ?? map['pendente'];
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.cls}`}>
+                {cfg.icon}{cfg.label}
+            </span>
+        );
+    };
+
     const totalGeral = comandas.reduce((acc, c) => acc + (c.totalCalculado || Number(c.totalEstimado)), 0);
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary-500 border-t-transparent mx-auto mb-3" />
+                    <LoadingSpinner size="lg" />
                     <p className="text-gray-600">Carregando comandas...</p>
                 </div>
             </div>
@@ -218,12 +284,21 @@ export default function CaixaPage() {
                                             R$ {(comanda.totalCalculado || Number(comanda.totalEstimado)).toFixed(2)}
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() => setModalComanda(comanda)}
-                                        className="bg-primary-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-primary-600 transition-colors"
-                                    >
-                                        Fechar Conta
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => abrirTransacoes(comanda)}
+                                            className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                                            title="Histórico de pagamentos"
+                                        >
+                                            <CreditCard className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setModalComanda(comanda)}
+                                            className="bg-primary-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-primary-600 transition-colors"
+                                        >
+                                            Fechar Conta
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -335,6 +410,94 @@ export default function CaixaPage() {
                         </div>
                     </div>
                 )}
+            {/* Modal Histórico de Transações */}
+            {transacoesComanda && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl max-w-lg w-full shadow-xl">
+                        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h2 className="font-bold text-lg text-gray-900">Histórico de Pagamentos</h2>
+                                <p className="text-sm text-gray-500">
+                                    {transacoesComanda.mesaRelacao?.numero
+                                        ? `Mesa ${transacoesComanda.mesaRelacao.numero}`
+                                        : transacoesComanda.nomeCliente}
+                                </p>
+                            </div>
+                            <button onClick={() => setTransacoesComanda(null)} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-3 max-h-80 overflow-y-auto">
+                            {loadingTransacoes ? (
+                                <div className="flex justify-center py-6"><div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
+                            ) : transacoes.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400">
+                                    <CreditCard className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                                    <p className="text-sm">Nenhuma transação registrada</p>
+                                </div>
+                            ) : (
+                                transacoes.map((t: any) => (
+                                    <div key={t.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div className="flex items-center gap-3">
+                                            {statusBadge(t.status)}
+                                            <div>
+                                                <p className="font-semibold text-sm text-gray-900">
+                                                    R$ {Number(t.valor).toFixed(2)}
+                                                    {t.metodo && <span className="text-gray-500 font-normal ml-1">· {t.metodo}</span>}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    {new Date(t.criadoAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                    {t.provedor && t.provedor !== 'manual' && ` · ${t.provedor}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {t.status === 'falhou' && (
+                                                <button
+                                                    onClick={() => atualizarTransacao(t.id, 'pendente')}
+                                                    className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium"
+                                                    title="Permitir retry"
+                                                >
+                                                    Retry
+                                                </button>
+                                            )}
+                                            {t.status === 'pago' && (
+                                                <button
+                                                    onClick={() => atualizarTransacao(t.id, 'reembolsado')}
+                                                    className="text-xs px-2 py-1 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 font-medium"
+                                                >
+                                                    Reembolsar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Registrar pagamento manual */}
+                        <div className="p-5 border-t border-gray-100 space-y-3">
+                            <p className="text-sm font-semibold text-gray-700">Registrar pagamento manual</p>
+                            <div className="flex gap-2">
+                                {['pix', 'dinheiro', 'cartao'].map(m => (
+                                    <button
+                                        key={m}
+                                        onClick={async () => {
+                                            const total = transacoesComanda.totalCalculado || Number(transacoesComanda.totalEstimado);
+                                            const nova = await registrarTransacao(transacoesComanda.id, total, m, 'pago');
+                                            if (nova) { setTransacoes(prev => [nova, ...prev]); toast.success('Pagamento registrado!'); carregarComandas(); }
+                                        }}
+                                        className="flex-1 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+                                    >
+                                        {m === 'pix' ? '📱 PIX' : m === 'dinheiro' ? '💵 Dinheiro' : '💳 Cartão'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

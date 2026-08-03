@@ -1,4 +1,5 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -141,7 +142,7 @@ function ConfirmarPedidoContent() {
         if (carrinho.length === 0) { toast.error('Adicione itens ao pedido'); return; }
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3001/api/pedidos', {
+            const response = await fetch(`${config.apiUrl}/pedidos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

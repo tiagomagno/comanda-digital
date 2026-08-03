@@ -378,10 +378,15 @@ function CardapioPageContent() {
                 imagemUrl: i.produto.imagemUrl,
             }))
         ));
-        // Detectar modo de negócio do estabelecimento
-        const isDeliveryOnly = estabelecimento?.aceitaDelivery === true && estabelecimento?.aceitaConsumoLocal === false;
+        const cfgLocal = (estabelecimento?.configuracoes && typeof estabelecimento.configuracoes === 'object')
+            ? (estabelecimento.configuracoes as Record<string, unknown>)
+            : {};
+        const isDeliveryOnly = cfgLocal.aceitaDelivery === true && cfgLocal.aceitaConsumoLocal === false;
         if (isDeliveryOnly) {
-            router.push(`/pedido/delivery?id=${estabelecimentoId}`);
+            const taxa = typeof cfgLocal.taxaEntrega === 'number'
+                ? cfgLocal.taxaEntrega
+                : parseFloat(String(cfgLocal.taxaEntrega ?? '0')) || 0;
+            router.push(`/pedido/delivery?id=${estabelecimentoId}&taxa=${taxa}`);
         } else {
             router.push(`/pedido/confirmar?comanda=${comandaCodigo}`);
         }

@@ -1,4 +1,7 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { config } from "@/lib/config";
+
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -47,7 +50,7 @@ export default function GarcomPage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:3001/api/garcom/comandas?status=ativa', {
+            const response = await fetch(`${config.apiUrl}/garcom/comandas?status=ativa`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -78,7 +81,7 @@ export default function GarcomPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/api/garcom/comandas/${comandaSelecionada.id}/pagamento`, {
+            const response = await fetch(`${config.apiUrl}/garcom/comandas/${comandaSelecionada.id}/pagamento`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -104,7 +107,7 @@ export default function GarcomPage() {
     const fecharComanda = async (comandaId: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/api/garcom/comandas/${comandaId}/fechar`, {
+            const response = await fetch(`${config.apiUrl}/garcom/comandas/${comandaId}/fechar`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -136,8 +139,7 @@ export default function GarcomPage() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Carregando comandas...</p>
+                    <LoadingSpinner size="lg" label="Carregando..." />
                 </div>
             </div>
         );

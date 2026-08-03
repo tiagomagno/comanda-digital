@@ -16,6 +16,12 @@ import {
     Store,
     ClipboardList,
     Truck,
+    Star,
+    Tag,
+    PackageCheck,
+    Zap,
+    Globe,
+    CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +41,7 @@ const getMenu = (isDeliveryOnly: boolean) => [
         section: isDeliveryOnly ? 'Gestão' : 'Estabelecimento',
         items: isDeliveryOnly
             ? [
-                { title: 'Pedidos', href: '/admin/pedidos', icon: ClipboardList },
+                { title: 'Pedidos', href: '/expedicao', icon: ClipboardList },
             ]
             : [
                 { title: 'Mesas e QR Code', href: '/admin/mesas', icon: QrCode },
@@ -49,19 +55,41 @@ const getMenu = (isDeliveryOnly: boolean) => [
                 { title: 'Entregadores', href: '/admin/entregadores', icon: Truck },
                 { title: 'Cozinha', href: '/cozinha', icon: ChefHat },
                 { title: 'Bar', href: '/bar', icon: Wine },
+                { title: 'Expedição', href: '/expedicao', icon: PackageCheck },
                 { title: 'Caixa', href: '/caixa', icon: DollarSign },
             ]
             : [
                 { title: 'Garçom', href: '/garcom', icon: UserCircle },
                 { title: 'Cozinha', href: '/cozinha', icon: ChefHat },
                 { title: 'Bar', href: '/bar', icon: Wine },
+                { title: 'Expedição', href: '/expedicao', icon: PackageCheck },
                 { title: 'Caixa', href: '/caixa', icon: DollarSign },
             ],
+    },
+    {
+        section: 'Recepção',
+        items: isDeliveryOnly
+            ? []
+            : [
+                { title: 'Fila de Espera', href: '/admin/recepcao/fila', icon: Users },
+                { title: 'Reservas', href: '/admin/recepcao/reservas', icon: ClipboardList },
+            ],
+    },
+    {
+        section: 'Marketing',
+        items: [
+            { title: 'Clientes (CRM)', href: '/admin/clientes', icon: Users },
+            { title: 'Cupons', href: '/admin/cupons', icon: Tag },
+            { title: 'Automações', href: '/admin/automacoes', icon: Zap },
+            { title: 'Canais de Venda', href: '/admin/canais', icon: Globe },
+        ],
     },
     {
         section: 'Sistema',
         items: [
             { title: 'Relatórios', href: '/admin/relatorios', icon: TrendingUp },
+            { title: 'Avaliações', href: '/admin/avaliacoes', icon: Star },
+            { title: 'Pagamentos', href: '/admin/pagamentos', icon: CreditCard },
             { title: 'Configurações', href: '/admin/configuracoes', icon: Settings },
         ],
     },
@@ -99,7 +127,7 @@ export default function PainelSidebar({ isDeliveryOnly = false }: { isDeliveryOn
                     Visão geral
                 </Link>
 
-                {menu.filter((m): m is { section: string; items: Array<{ title: string; href: string; icon: typeof LayoutDashboard }> } => 'section' in m && !!m.section).map((block) => (
+                {menu.filter((m): m is { section: string; items: Array<{ title: string; href: string; icon: typeof LayoutDashboard }> } => 'section' in m && !!m.section && m.items.length > 0).map((block) => (
                     <div key={block.section}>
                         <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             {block.section}

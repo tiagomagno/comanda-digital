@@ -1,327 +1,254 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-    TrendingUp,
-    DollarSign,
-    Users,
-    UtensilsCrossed,
-    Calendar,
-    ArrowLeft,
-    RefreshCw,
-    Download
-} from 'lucide-react';
-import Link from 'next/link';
+import { TrendingUp, DollarSign, Users, RefreshCw, UtensilsCrossed, Star, Truck, ShoppingBag, RotateCcw, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-interface RelatorioVendas {
-    totalVendas: number;
-    totalComandas: number;
-    ticketMedio: number;
-    vendasPorMetodo: Array<{
-        metodo: string;
-        total: number;
-        quantidade: number;
-    }>;
-    produtosMaisVendidos: Array<{
-        produto: string;
-        quantidade: number;
-        total: number;
-    }>;
-    vendasPorHora: Array<{
-        hora: string;
-        vendas: number;
-    }>;
+interface DashboardStats {
+    receitaTotal: number; totalPedidos: number; ticketMedio: number;
+    salao: number; paraLevar: number; comandasAtivas: number;
+    produtosEmAlta: Array<{ nome: string; pedidos: number }>;
+    avaliacoes: { total: number; mediaAtendimento: number; mediaComida: number };
 }
+
+interface Analytics {
+    canais: { mesa: { receita: number; pedidos: number }; delivery: { receita: number; pedidos: number } };
+    evolucaoDiaria: Array<{ data: string; receita: number }>;
+    taxaRecompra: number;
+    ltv: number;
+    topClientes: Array<{ nome: string; telefone: string; totalGasto: number; totalPedidos: number }>;
+    taxaChargeback: number;
+}
+
+const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+const formatBRL = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 export default function RelatoriosPage() {
     const router = useRouter();
-    const [relatorio, setRelatorio] = useState<RelatorioVendas | null>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [loading, setLoading] = useState(true);
-    const [periodo, setPeriodo] = useState<'hoje' | 'semana' | 'mes'>('hoje');
 
-    useEffect(() => {
-        carregarRelatorio();
-    }, [periodo]);
+    const h = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}` });
 
-    const carregarRelatorio = async () => {
+    const carregar = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (!token) { router.push('/auth/login'); return; }
         setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                router.push('/auth/login');
-                return;
-            }
 
-            // Dados simulados - você pode substituir por chamada real à API
-            const mockRelatorio: RelatorioVendas = {
-                totalVendas: 0,
-                totalComandas: 0,
-                ticketMedio: 0,
-                vendasPorMetodo: [],
-                produtosMaisVendidos: [],
-                vendasPorHora: [],
-            };
+        const [statsRes, analyticsRes] = await Promise.allSettled([
+            fetch(`${API}/api/gestor/dashboard`, { headers: h() }),
+            fetch(`${API}/api/gestor/analytics`, { headers: h() }),
+        ]);
 
-            setRelatorio(mockRelatorio);
-        } catch (error) {
-            console.error('Erro ao carregar relatório:', error);
-            toast.error('Erro ao carregar relatório');
-        } finally {
-            setLoading(false);
-        }
-    };
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok)
+            setStats(await statsRes.value.json());
+        if (analyticsRes.status === 'fulfilled' && analyticsRes.value.ok)
+            setAnalytics(await analyticsRes.value.json());
+        else toast.error('Erro ao carregar analytics');
 
-    const exportarRelatorio = () => {
-        toast.success('Relatório exportado! (funcionalidade em desenvolvimento)');
-    };
+        setLoading(false);
+    }, [router]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-900 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Carregando relatório...</p>
-                </div>
-            </div>
-        );
-    }
+    useEffect(() => { carregar(); }, [carregar]);
+
+    if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner size="lg" /></div>;
+
+    const totalReceita30d = (analytics?.canais.mesa.receita ?? 0) + (analytics?.canais.delivery.receita ?? 0);
+    const pctMesa = totalReceita30d > 0 ? ((analytics?.canais.mesa.receita ?? 0) / totalReceita30d) * 100 : 0;
+    const pctDelivery = 100 - pctMesa;
+    const maxEvolucao = Math.max(...(analytics?.evolucaoDiaria.map(d => d.receita) ?? [1]), 1);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <div className="container mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <Link
-                        href="/admin/dashboard"
-                        className="inline-flex items-center text-gray-600 hover:text-gray-700 mb-4"
-                    >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
-                        Voltar ao Dashboard
-                    </Link>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
-                                <TrendingUp className="w-10 h-10 text-gray-900" />
-                                Relatórios
-                            </h1>
-                            <p className="text-gray-600 mt-2">
-                                Análise de vendas e desempenho
-                            </p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={carregarRelatorio}
-                                className="bg-white px-4 py-2 rounded-lg shadow hover:shadow-md transition-shadow flex items-center gap-2"
-                            >
-                                <RefreshCw className="w-4 h-4" />
-                                Atualizar
-                            </button>
-                            <button
-                                onClick={exportarRelatorio}
-                                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
-                            >
-                                <Download className="w-5 h-5" />
-                                Exportar
-                            </button>
-                        </div>
-                    </div>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <TrendingUp className="w-7 h-7 text-[#FF5C01]" /> Relatórios & Analytics
+                    </h1>
+                    <p className="text-gray-500 text-sm mt-0.5">Indicadores de desempenho do estabelecimento</p>
                 </div>
+                <button onClick={carregar} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium">
+                    <RefreshCw className="w-4 h-4" /> Atualizar
+                </button>
+            </div>
 
-                {/* Filtro de Período */}
-                <div className="bg-white rounded-xl shadow-lg p-4 mb-8">
-                    <div className="flex items-center gap-4">
-                        <Calendar className="w-5 h-5 text-gray-600" />
-                        <span className="text-gray-700 font-medium">Período:</span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setPeriodo('hoje')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${periodo === 'hoje'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Hoje
-                            </button>
-                            <button
-                                onClick={() => setPeriodo('semana')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${periodo === 'semana'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Esta Semana
-                            </button>
-                            <button
-                                onClick={() => setPeriodo('mes')}
-                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${periodo === 'mes'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Este Mês
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Estatísticas Principais */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-gray-600 text-sm font-medium">Total de Vendas</p>
-                            <DollarSign className="w-8 h-8 text-green-500" />
-                        </div>
-                        <p className="text-3xl font-bold text-gray-900">
-                            R$ {relatorio?.totalVendas.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-green-600 mt-1">
-                            {periodo === 'hoje' ? 'Hoje' : periodo === 'semana' ? 'Esta semana' : 'Este mês'}
-                        </p>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-gray-600 text-sm font-medium">Total de Comandas</p>
-                            <Users className="w-8 h-8 text-blue-500" />
-                        </div>
-                        <p className="text-3xl font-bold text-gray-900">
-                            {relatorio?.totalComandas}
-                        </p>
-                        <p className="text-sm text-blue-600 mt-1">
-                            Comandas atendidas
-                        </p>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-gray-600 text-sm font-medium">Ticket Médio</p>
-                            <TrendingUp className="w-8 h-8 text-purple-500" />
-                        </div>
-                        <p className="text-3xl font-bold text-gray-900">
-                            R$ {relatorio?.ticketMedio.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-purple-600 mt-1">
-                            Por comanda
-                        </p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Vendas por Método de Pagamento */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">
-                            Vendas por Método de Pagamento
-                        </h2>
-                        <div className="space-y-4">
-                            {relatorio?.vendasPorMetodo.map((metodo, index) => {
-                                const porcentagem = (metodo.total / (relatorio?.totalVendas || 1)) * 100;
-                                return (
-                                    <div key={index}>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="font-medium text-gray-700">
-                                                {metodo.metodo === 'Dinheiro' && '💵'}
-                                                {metodo.metodo === 'Cartão' && '💳'}
-                                                {metodo.metodo === 'PIX' && '📱'}
-                                                {' '}{metodo.metodo}
-                                            </span>
-                                            <span className="text-sm text-gray-600">
-                                                {metodo.quantidade} vendas
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1 bg-gray-200 rounded-full h-3">
-                                                <div
-                                                    className={`h-3 rounded-full ${metodo.metodo === 'Dinheiro' ? 'bg-green-500' :
-                                                        metodo.metodo === 'Cartão' ? 'bg-blue-500' :
-                                                            'bg-purple-500'
-                                                        }`}
-                                                    style={{ width: `${porcentagem}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-semibold text-gray-900 w-24 text-right">
-                                                R$ {metodo.total.toFixed(2)}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {porcentagem.toFixed(1)}% do total
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Vendas por Hora */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">
-                            Vendas por Horário
-                        </h2>
-                        <div className="space-y-3">
-                            {relatorio?.vendasPorHora.map((hora, index) => {
-                                const maxVendas = Math.max(...(relatorio?.vendasPorHora.map(h => h.vendas) || [0]));
-                                const porcentagem = (hora.vendas / maxVendas) * 100;
-                                return (
-                                    <div key={index} className="flex items-center gap-3">
-                                        <span className="text-sm font-medium text-gray-700 w-12">
-                                            {hora.hora}
-                                        </span>
-                                        <div className="flex-1 bg-gray-200 rounded-full h-8">
-                                            <div
-                                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-8 rounded-full flex items-center justify-end pr-3"
-                                                style={{ width: `${porcentagem}%` }}
-                                            >
-                                                <span className="text-xs font-semibold text-white">
-                                                    R$ {hora.vendas}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Produtos Mais Vendidos */}
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <UtensilsCrossed className="w-6 h-6" />
-                        Top 5 Produtos Mais Vendidos
-                    </h2>
-                    <div className="space-y-4">
-                        {relatorio?.produtosMaisVendidos.map((produto, index) => (
-                            <div
-                                key={index}
-                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <span className="text-3xl font-bold text-gray-300">
-                                        {index + 1}
-                                    </span>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900">
-                                            {produto.produto}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                            {produto.quantidade} unidades vendidas
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xl font-bold text-green-600">
-                                        R$ {produto.total.toFixed(2)}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                        R$ {(produto.total / produto.quantidade).toFixed(2)} / un
-                                    </p>
-                                </div>
+            {/* KPIs do dia */}
+            {stats && (
+                <div>
+                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">📅 Hoje</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        {[
+                            { label: 'Receita', val: formatBRL(stats.receitaTotal), icon: <DollarSign className="w-4 h-4" />, cor: 'text-green-700 bg-green-50' },
+                            { label: 'Pedidos', val: stats.totalPedidos, icon: <ShoppingBag className="w-4 h-4" />, cor: 'text-blue-700 bg-blue-50' },
+                            { label: 'Ticket Médio', val: formatBRL(stats.ticketMedio), icon: <TrendingUp className="w-4 h-4" />, cor: 'text-purple-700 bg-purple-50' },
+                            { label: 'Salão', val: stats.salao, icon: <UtensilsCrossed className="w-4 h-4" />, cor: 'text-amber-700 bg-amber-50' },
+                            { label: 'Delivery', val: stats.paraLevar, icon: <Truck className="w-4 h-4" />, cor: 'text-orange-700 bg-orange-50' },
+                            { label: 'Mesas Ativas', val: stats.comandasAtivas, icon: <Users className="w-4 h-4" />, cor: 'text-teal-700 bg-teal-50' },
+                        ].map((k, i) => (
+                            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium mb-2 ${k.cor}`}>{k.icon}{k.label}</div>
+                                <p className="text-2xl font-bold text-gray-900">{k.val}</p>
                             </div>
                         ))}
                     </div>
                 </div>
-            </div>
+            )}
+
+            {analytics && (
+                <>
+                    {/* Indicadores de retenção */}
+                    <div>
+                        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">📊 Retenção (últimos 30 dias)</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[
+                                { label: 'Taxa de Recompra', val: `${analytics.taxaRecompra}%`, sub: 'clientes que repetiram', icon: <RotateCcw className="w-5 h-5" />, cor: analytics.taxaRecompra >= 30 ? 'text-green-700 bg-green-50 border-green-200' : 'text-amber-700 bg-amber-50 border-amber-200' },
+                                { label: 'LTV Médio', val: formatBRL(analytics.ltv), sub: 'valor médio por cliente', icon: <Users className="w-5 h-5" />, cor: 'text-purple-700 bg-purple-50 border-purple-200' },
+                                { label: 'Receita Mesa', val: formatBRL(analytics.canais.mesa.receita), sub: `${pctMesa.toFixed(0)}% do total · ${analytics.canais.mesa.pedidos} pedidos`, icon: <UtensilsCrossed className="w-5 h-5" />, cor: 'text-blue-700 bg-blue-50 border-blue-200' },
+                                { label: 'Receita Delivery', val: formatBRL(analytics.canais.delivery.receita), sub: `${pctDelivery.toFixed(0)}% do total · ${analytics.canais.delivery.pedidos} pedidos`, icon: <Truck className="w-5 h-5" />, cor: 'text-orange-700 bg-orange-50 border-orange-200' },
+                            ].map((k, i) => (
+                                <div key={i} className={`rounded-xl border p-4 shadow-sm ${k.cor}`}>
+                                    <div className="flex items-center gap-2 mb-2">{k.icon}<p className="text-sm font-semibold">{k.label}</p></div>
+                                    <p className="text-2xl font-bold">{k.val}</p>
+                                    <p className="text-xs opacity-70 mt-0.5">{k.sub}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Evolução diária + Canal breakdown */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Evolução 7 dias */}
+                        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <h3 className="font-semibold text-gray-800 mb-4">📈 Evolução de Receita (7 dias)</h3>
+                            <div className="flex items-end gap-2 h-32">
+                                {analytics.evolucaoDiaria.map((d, i) => (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                        <div className="w-full relative flex items-end" style={{ height: '96px' }}>
+                                            <div
+                                                className="w-full bg-[#FF5C01] rounded-t-md transition-all duration-500"
+                                                style={{ height: `${Math.max((d.receita / maxEvolucao) * 96, d.receita > 0 ? 4 : 0)}px` }}
+                                                title={formatBRL(d.receita)}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-gray-400 whitespace-nowrap">{d.data}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            {analytics.evolucaoDiaria.every(d => d.receita === 0) && (
+                                <p className="text-sm text-gray-400 text-center mt-2">Sem dados de receita nos últimos 7 dias</p>
+                            )}
+                        </div>
+
+                        {/* Breakdown canal */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <h3 className="font-semibold text-gray-800 mb-4">🎯 Receita por Canal</h3>
+                            {totalReceita30d === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-8">Sem dados disponíveis</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {[
+                                        { label: 'Salão / Mesa', pct: pctMesa, val: analytics.canais.mesa.receita, cor: 'bg-blue-500' },
+                                        { label: 'Delivery', pct: pctDelivery, val: analytics.canais.delivery.receita, cor: 'bg-orange-500' },
+                                    ].map((c, i) => (
+                                        <div key={i}>
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-medium text-gray-700">{c.label}</span>
+                                                <span className="text-gray-500">{c.pct.toFixed(0)}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-3">
+                                                <div className={`${c.cor} h-3 rounded-full transition-all duration-700`} style={{ width: `${c.pct}%` }} />
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-0.5">{formatBRL(c.val)}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {analytics.taxaChargeback > 0 && (
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <div className="flex items-center gap-2 text-red-600">
+                                        <AlertCircle className="w-4 h-4" />
+                                        <span className="text-sm font-medium">Taxa de chargeback: {analytics.taxaChargeback}%</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Top clientes + Produtos em alta */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Top clientes */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <h3 className="font-semibold text-gray-800 mb-4">👑 Top 5 Clientes</h3>
+                            {analytics.topClientes.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6">Nenhum cliente com compras registradas</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {analytics.topClientes.map((c, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-gray-100 text-gray-600' : i === 2 ? 'bg-amber-100 text-amber-700' : 'bg-gray-50 text-gray-500'}`}>{i + 1}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-gray-900 text-sm truncate">{c.nome}</p>
+                                                <p className="text-xs text-gray-400">{c.totalPedidos} pedidos</p>
+                                            </div>
+                                            <span className="font-bold text-gray-700 text-sm">{formatBRL(c.totalGasto)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Produtos em alta */}
+                        {stats && stats.produtosEmAlta.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                <h3 className="font-semibold text-gray-800 mb-4">🔥 Produtos Mais Pedidos (hoje)</h3>
+                                <div className="space-y-3">
+                                    {stats.produtosEmAlta.map((p, i) => {
+                                        const maxQty = stats.produtosEmAlta[0].pedidos;
+                                        return (
+                                            <div key={i}>
+                                                <div className="flex justify-between text-sm mb-1">
+                                                    <span className="font-medium text-gray-700 truncate">{p.nome}</span>
+                                                    <span className="text-gray-500 ml-2 flex-shrink-0">{p.pedidos}x</span>
+                                                </div>
+                                                <div className="w-full bg-gray-100 rounded-full h-2">
+                                                    <div className="bg-[#FF5C01] h-2 rounded-full" style={{ width: `${(p.pedidos / maxQty) * 100}%` }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Avaliações */}
+                        {stats && stats.avaliacoes.total > 0 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                <h3 className="font-semibold text-gray-800 mb-4">⭐ Avaliações</h3>
+                                <p className="text-xs text-gray-400 mb-3">{stats.avaliacoes.total} avaliações no total</p>
+                                {[
+                                    { label: 'Atendimento', val: stats.avaliacoes.mediaAtendimento },
+                                    { label: 'Comida', val: stats.avaliacoes.mediaComida },
+                                ].map((av, i) => (
+                                    <div key={i} className="mb-3">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-600">{av.label}</span>
+                                            <span className="font-bold text-[#FF5C01]">{av.val.toFixed(1)} / 5</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                                            <div className="bg-[#FF5C01] h-2.5 rounded-full" style={{ width: `${(av.val / 5) * 100}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 }

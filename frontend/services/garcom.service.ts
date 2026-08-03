@@ -20,7 +20,7 @@ export interface PedidoItem {
 export interface Pedido {
     id: string;
     numeroPedido: number;
-    status: 'criado' | 'pago' | 'em_preparo' | 'pronto' | 'entregue' | 'cancelado';
+    status: 'criado' | 'aguardando_pagamento' | 'pago' | 'em_preparo' | 'pronto' | 'em_expedicao' | 'entregue' | 'cancelado';
     total: number;
     createdAt: string;
     itens: PedidoItem[];

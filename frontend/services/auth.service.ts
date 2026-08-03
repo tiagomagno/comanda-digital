@@ -1,14 +1,12 @@
-import api from '@/lib/api';
-import { AuthResponse } from '@/types/auth';
+import { api } from './api';
+import { AuthResponse, User } from '@/types/auth';
 
 export const authService = {
     login: async (codigo: string) => {
-        const response = await api.post<AuthResponse>('/auth/login', { codigo });
-        return response.data;
+        return api.post<AuthResponse>('/auth/login', { codigo });
     },
 
     me: async () => {
-        const response = await api.get<{ user: any }>('/auth/me');
-        return response.data;
+        return api.get<User>('/auth/me');
     },
 };

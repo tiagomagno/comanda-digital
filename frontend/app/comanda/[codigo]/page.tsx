@@ -1,4 +1,5 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -34,7 +35,7 @@ export default function HistoricoComandaPage() {
     const carregarPedidos = async () => {
         try {
             // Buscar comanda pelo código
-            const responseComanda = await fetch(`http://localhost:3001/api/comandas/codigo/${codigo}`);
+            const responseComanda = await fetch(`${config.apiUrl}/comandas/codigo/${codigo}`);
             const comanda = await responseComanda.json();
 
             if (comanda && comanda.pedidos) {

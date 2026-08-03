@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function EsqueciSenhaPage() {
     const [email, setEmail] = useState('');
@@ -57,11 +58,8 @@ export default function EsqueciSenhaPage() {
         <div className="bg-[#F8F9FA] h-screen overflow-hidden flex flex-row font-sans">
             <div className="w-full lg:w-1/2 h-full overflow-y-auto bg-white flex flex-col relative z-10">
                 <div className="px-8 pt-8 lg:px-16 xl:px-24">
-                    <div className="flex items-center gap-2 text-[#0B241E]">
-                        <div className="w-8 h-8 bg-[#FF5C01] rounded-lg flex items-center justify-center text-white shadow-sm">
-                            <span className="material-symbols-outlined text-lg">restaurant_menu</span>
-                        </div>
-                        <span className="font-bold text-xl tracking-wide font-display">Comanda Digital</span>
+                    <div className="flex items-center gap-2">
+                        <Image src="/logos/logo-dine-horizontal.svg" alt="DINE Gestão Gastronômica" width={140} height={36} priority />
                     </div>
                 </div>
 
@@ -95,14 +93,14 @@ export default function EsqueciSenhaPage() {
                                 placeholder="exemplo@email.com"
                                 disabled={isLoading}
                                 autoComplete="email"
-                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01] focus:border-[#FF5C01] text-gray-900 placeholder-gray-400 transition-all outline-none"
+                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e9463c] focus:border-[#e9463c] text-gray-900 placeholder-gray-400 transition-all outline-none"
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 pt-4">
                             <Link
                                 href="/auth/login"
-                                className="flex items-center justify-center border-2 border-[#FFAD7D] text-[#FF5C01] font-semibold py-3.5 px-6 rounded-lg hover:bg-orange-50 transition-colors duration-200"
+                            className="flex items-center justify-center border-2 border-[#e9463c]/40 text-[#e9463c] font-semibold py-3.5 px-6 rounded-lg hover:bg-red-50 transition-colors duration-200"
                             >
                                 Voltar
                             </Link>
@@ -124,7 +122,7 @@ export default function EsqueciSenhaPage() {
                                 className="text-gray-400 hover:text-gray-600 text-sm transition-colors"
                             >
                                 Lembrou a senha?{' '}
-                                <span className="text-[#FF5C01] font-semibold hover:underline">
+                                <span className="text-[#e9463c] font-semibold hover:underline">
                                     Voltar ao login
                                 </span>
                             </Link>
@@ -137,7 +135,7 @@ export default function EsqueciSenhaPage() {
                 <div className="absolute top-[-80px] right-[-80px] w-80 h-80 rounded-full bg-[#14423b] opacity-60" />
                 <div className="absolute bottom-[-60px] left-[-60px] w-64 h-64 rounded-full bg-[#14423b] opacity-40" />
                 <div className="relative z-10 flex flex-col items-center gap-6 text-center px-12">
-                    <div className="w-20 h-20 bg-[#FF5C01] rounded-2xl flex items-center justify-center shadow-2xl">
+                    <div className="w-20 h-20 bg-[#e9463c] rounded-2xl flex items-center justify-center shadow-2xl">
                         <span className="material-symbols-outlined text-white text-4xl">lock_reset</span>
                     </div>
                     <div>

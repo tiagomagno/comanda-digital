@@ -1,5 +1,6 @@
 'use client';
 
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -85,6 +86,14 @@ export default function ProdutosPage() {
     // Estado para modo edição no modal
     const [editandoProduto, setEditandoProduto] = useState<Produto | null>(null);
 
+    // Modal de adicionais
+    const [showAdicionaisModal, setShowAdicionaisModal] = useState(false);
+    const [produtoAdicionais, setProdutoAdicionais] = useState<Produto | null>(null);
+    const [grupos, setGrupos] = useState<any[]>([]);
+    const [loadingAdicionais, setLoadingAdicionais] = useState(false);
+    const [novoGrupo, setNovoGrupo] = useState({ nome: '', obrigatorio: false, maxSelecoes: 1 });
+    const [novaOpcaoPorGrupo, setNovaOpcaoPorGrupo] = useState<Record<string, { nome: string; preco: string }>>({});
+
     // Produto form
     const [formData, setFormData] = useState({
         codigo: '', nome: '', descricao: '', preco: '',
@@ -107,6 +116,62 @@ export default function ProdutosPage() {
             imagemUrl: produto.imagemUrl || '',
         });
         setShowModal(true);
+    };
+
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+    const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
+
+    const abrirAdicionais = async (produto: Produto) => {
+        setProdutoAdicionais(produto);
+        setLoadingAdicionais(true);
+        setShowAdicionaisModal(true);
+        try {
+            const res = await fetch(`${apiUrl}/api/produtos/${produto.id}/adicional-grupos`, { headers: authHeader() });
+            if (res.ok) setGrupos(await res.json());
+        } catch { toast.error('Erro ao carregar adicionais'); }
+        finally { setLoadingAdicionais(false); }
+    };
+
+    const salvarGrupo = async () => {
+        if (!produtoAdicionais || !novoGrupo.nome.trim()) { toast.error('Nome do grupo obrigatório'); return; }
+        const res = await fetch(`${apiUrl}/api/produtos/${produtoAdicionais.id}/adicional-grupos`, {
+            method: 'POST', headers: authHeader(), body: JSON.stringify(novoGrupo)
+        });
+        if (res.ok) {
+            const novo = await res.json();
+            setGrupos(prev => [...prev, novo]);
+            setNovoGrupo({ nome: '', obrigatorio: false, maxSelecoes: 1 });
+            toast.success('Grupo criado!');
+        }
+    };
+
+    const deletarGrupo = async (grupoId: string) => {
+        if (!produtoAdicionais) return;
+        await fetch(`${apiUrl}/api/produtos/${produtoAdicionais.id}/adicional-grupos/${grupoId}`, { method: 'DELETE', headers: authHeader() });
+        setGrupos(prev => prev.filter(g => g.id !== grupoId));
+        toast.success('Grupo removido');
+    };
+
+    const salvarOpcao = async (grupoId: string) => {
+        if (!produtoAdicionais) return;
+        const form = novaOpcaoPorGrupo[grupoId];
+        if (!form?.nome?.trim()) { toast.error('Nome da opção obrigatório'); return; }
+        const res = await fetch(`${apiUrl}/api/produtos/${produtoAdicionais.id}/adicional-grupos/${grupoId}/opcoes`, {
+            method: 'POST', headers: authHeader(),
+            body: JSON.stringify({ nome: form.nome, preco: parseFloat(form.preco || '0') || 0 })
+        });
+        if (res.ok) {
+            const nova = await res.json();
+            setGrupos(prev => prev.map(g => g.id === grupoId ? { ...g, opcoes: [...g.opcoes, nova] } : g));
+            setNovaOpcaoPorGrupo(prev => ({ ...prev, [grupoId]: { nome: '', preco: '' } }));
+            toast.success('Opção adicionada!');
+        }
+    };
+
+    const deletarOpcao = async (grupoId: string, opcaoId: string) => {
+        if (!produtoAdicionais) return;
+        await fetch(`${apiUrl}/api/produtos/${produtoAdicionais.id}/adicional-grupos/${grupoId}/opcoes/${opcaoId}`, { method: 'DELETE', headers: authHeader() });
+        setGrupos(prev => prev.map(g => g.id === grupoId ? { ...g, opcoes: g.opcoes.filter((o: any) => o.id !== opcaoId) } : g));
     };
 
     const calcDesconto = (preco: number, precoPromo: number) =>
@@ -411,7 +476,7 @@ export default function ProdutosPage() {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#FF5C01] mx-auto mb-3" />
+                    <LoadingSpinner size="lg" />
                     <p className="text-gray-500">Carregando produtos...</p>
                 </div>
             </div>
@@ -710,6 +775,13 @@ export default function ProdutosPage() {
                                 </button>
                                 <div className="flex gap-1">
                                     <button
+                                        onClick={() => abrirAdicionais(produto)}
+                                        className="p-1 rounded text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                                        title="Gerenciar adicionais"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
                                         onClick={() => abrirEdicao(produto)}
                                         className="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100"
                                         title="Editar produto"
@@ -922,6 +994,116 @@ export default function ProdutosPage() {
                     </div>
                 )
             }
+
+            {/* ── Modal Gerenciar Adicionais ── */}
+            {showAdicionaisModal && produtoAdicionais && (
+                <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+                    <div className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+                        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h2 className="font-bold text-lg text-gray-900">Adicionais</h2>
+                                <p className="text-sm text-gray-500">{produtoAdicionais.nome}</p>
+                            </div>
+                            <button onClick={() => setShowAdicionaisModal(false)} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="overflow-y-auto flex-1 p-5 space-y-6">
+                            {loadingAdicionais ? (
+                                <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-[#FF5C01] border-t-transparent rounded-full animate-spin" /></div>
+                            ) : (
+                                <>
+                                    {grupos.length === 0 && (
+                                        <p className="text-center text-gray-400 py-4 text-sm">Nenhum grupo criado ainda</p>
+                                    )}
+                                    {grupos.map(grupo => (
+                                        <div key={grupo.id} className="border border-gray-200 rounded-xl overflow-hidden">
+                                            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-gray-800">{grupo.nome}</span>
+                                                    {grupo.obrigatorio && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Obrigatório</span>}
+                                                    <span className="text-xs text-gray-400">Até {grupo.maxSelecoes}</span>
+                                                </div>
+                                                <button onClick={() => deletarGrupo(grupo.id)} className="text-red-400 hover:text-red-600 p-1">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            <div className="p-3 space-y-2">
+                                                {grupo.opcoes.map((opcao: any) => (
+                                                    <div key={opcao.id} className="flex items-center justify-between px-3 py-2 bg-white border border-gray-100 rounded-lg">
+                                                        <span className="text-sm text-gray-800">{opcao.nome}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            {Number(opcao.preco) > 0 && (
+                                                                <span className="text-sm font-medium text-[#FF5C01]">+R${Number(opcao.preco).toFixed(2)}</span>
+                                                            )}
+                                                            <button onClick={() => deletarOpcao(grupo.id, opcao.id)} className="text-gray-300 hover:text-red-500">
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <div className="flex gap-2 mt-2">
+                                                    <input
+                                                        value={novaOpcaoPorGrupo[grupo.id]?.nome ?? ''}
+                                                        onChange={e => setNovaOpcaoPorGrupo(p => ({ ...p, [grupo.id]: { ...p[grupo.id], nome: e.target.value } }))}
+                                                        placeholder="Nome da opção"
+                                                        className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none"
+                                                    />
+                                                    <input
+                                                        type="number" min="0" step="0.01"
+                                                        value={novaOpcaoPorGrupo[grupo.id]?.preco ?? ''}
+                                                        onChange={e => setNovaOpcaoPorGrupo(p => ({ ...p, [grupo.id]: { ...p[grupo.id], preco: e.target.value } }))}
+                                                        placeholder="R$ 0,00"
+                                                        className="w-24 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none"
+                                                    />
+                                                    <button onClick={() => salvarOpcao(grupo.id)} className="px-3 py-2 bg-[#FF5C01] text-white rounded-lg text-sm font-medium hover:bg-[#e05101]">
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Novo grupo */}
+                        <div className="p-5 border-t border-gray-100 space-y-3">
+                            <p className="text-sm font-semibold text-gray-700">Novo grupo</p>
+                            <div className="flex gap-2">
+                                <input
+                                    value={novoGrupo.nome}
+                                    onChange={e => setNovoGrupo(p => ({ ...p, nome: e.target.value }))}
+                                    placeholder="Ex: Ponto da carne, Adicional..."
+                                    className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none"
+                                />
+                                <input
+                                    type="number" min="1" max="10"
+                                    value={novoGrupo.maxSelecoes}
+                                    onChange={e => setNovoGrupo(p => ({ ...p, maxSelecoes: parseInt(e.target.value) || 1 }))}
+                                    title="Máx. seleções"
+                                    className="w-16 text-sm px-3 py-2 border border-gray-200 rounded-lg text-center focus:ring-2 focus:ring-[#FF5C01]/20 focus:border-[#FF5C01] outline-none"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={novoGrupo.obrigatorio}
+                                        onChange={e => setNovoGrupo(p => ({ ...p, obrigatorio: e.target.checked }))}
+                                        className="w-4 h-4 accent-[#FF5C01]"
+                                    />
+                                    <span className="text-sm text-gray-700">Obrigatório</span>
+                                </label>
+                                <button onClick={salvarGrupo} className="px-4 py-2 bg-[#FF5C01] text-white rounded-lg text-sm font-bold hover:bg-[#e05101] transition-colors">
+                                    Criar grupo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Modal de Exclusão ── */}
             {

@@ -1,16 +1,17 @@
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: 'Comanda Digital',
-    description: 'Sistema de Comandas Digitais para Bares e Restaurantes',
+    title: 'DINE Gestão Gastronômica',
+    description: 'Plataforma de gestão gastronômica para bares e restaurantes',
     manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-    themeColor: '#FF5C01',
+    themeColor: '#e9463c',
     width: 'device-width',
     initialScale: 1,
     maximumScale: 1,
@@ -22,7 +23,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="pt-BR" className="dark">
+        <html lang="pt-BR" suppressHydrationWarning>
             <head>
                 <link
                     href="https://api.fontshare.com/v2/css?f[]=lufga@300,400,500,600,700&display=swap"
@@ -43,20 +44,22 @@ export default function RootLayout({
                     rel="stylesheet"
                 />
             </head>
-            <body className="font-sans antialiased">
-                <AuthProvider>
-                    {children}
-                    <Toaster
-                        position="top-center"
-                        toastOptions={{
-                            duration: 3000,
-                            style: {
-                                background: '#363636',
-                                color: '#fff',
-                            },
-                        }}
-                    />
-                </AuthProvider>
+            <body className="font-sans antialiased text-neutral-900 bg-neutral-50 dark:text-neutral-100 dark:bg-[#0e0e0e] transition-colors duration-300">
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+                    <AuthProvider>
+                        {children}
+                        <Toaster
+                            position="top-center"
+                            toastOptions={{
+                                duration: 3000,
+                                style: {
+                                    background: '#363636',
+                                    color: '#fff',
+                                },
+                            }}
+                        />
+                    </AuthProvider>
+                </ThemeProvider>
             </body>
         </html>
     );

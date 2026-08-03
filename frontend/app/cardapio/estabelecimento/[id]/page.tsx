@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { UtensilsCrossed, Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { config } from '@/lib/config';
 
 interface Produto {
     id: string;
@@ -43,8 +42,8 @@ export default function CardapioEstabelecimentoPage() {
                 setLoading(true);
                 setError(null);
                 const [cardapioRes, estabsRes] = await Promise.all([
-                    fetch(`${API_URL}/api/cardapio?estabelecimentoId=${id}`),
-                    fetch(`${API_URL}/api/cardapio/estabelecimentos`),
+                    fetch(`${config.apiUrl}/cardapio?estabelecimentoId=${id}`),
+                    fetch(`${config.apiUrl}/cardapio/estabelecimentos`),
                 ]);
                 if (!cardapioRes.ok) {
                     setError('Cardápio não encontrado.');
@@ -113,11 +112,11 @@ export default function CardapioEstabelecimentoPage() {
                 </div>
             </header>
 
-            {/* Aviso: somente visualização / delivery em breve */}
+            {/* Aviso: modo prévia do gestor */}
             <div className="bg-amber-50 border-b border-amber-100">
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-center gap-2 text-amber-800 text-sm">
                     <Sparkles className="w-4 h-4 shrink-0" />
-                    <span>Este cardápio é apenas para visualização. Pedidos e delivery em breve.</span>
+                    <span>Prévia do gestor — esta é a visualização pública do seu cardápio. Pedidos não são aceitos nesta tela.</span>
                 </div>
             </div>
 

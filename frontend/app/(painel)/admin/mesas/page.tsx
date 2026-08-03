@@ -1,4 +1,6 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { config } from "@/lib/config";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,9 +27,20 @@ export default function MesasPage() {
         numero: '',
         capacidade: 4,
     });
+    const [estabelecimentoId, setEstabelecimentoId] = useState('');
 
     useEffect(() => {
         carregarMesas();
+
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload?.estabelecimentoId) setEstabelecimentoId(payload.estabelecimentoId);
+            } catch (e) {
+                console.error('Erro ao decodificar token', e);
+            }
+        }
     }, []);
 
     const carregarMesas = async () => {
@@ -38,7 +51,7 @@ export default function MesasPage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:3001/api/gestor/mesas', {
+            const response = await fetch(`${config.apiUrl}/gestor/mesas`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -64,7 +77,7 @@ export default function MesasPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/gestor/mesas', {
+            const response = await fetch(`${config.apiUrl}/gestor/mesas`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -90,7 +103,7 @@ export default function MesasPage() {
     const downloadQRCode = async (mesaId: string, numero: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/api/gestor/mesas/${mesaId}/qrcode`, {
+            const response = await fetch(`${config.apiUrl}/gestor/mesas/${mesaId}/qrcode`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -119,7 +132,7 @@ export default function MesasPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/api/gestor/mesas/${mesaId}`, {
+            const response = await fetch(`${config.apiUrl}/gestor/mesas/${mesaId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -142,8 +155,7 @@ export default function MesasPage() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-900 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Carregando mesas...</p>
+                    <LoadingSpinner size="lg" label="Carregando..." />
                 </div>
             </div>
         );
@@ -268,7 +280,8 @@ export default function MesasPage() {
                     <div className="flex gap-2">
                         <button
                             onClick={() => {
-                                const qrCodeUrl = `${window.location.origin}/comanda/nova?tipo=individual`;
+                                if (!estabelecimentoId) { toast.error('Estabelecimento não identificado'); return; }
+                                const qrCodeUrl = `${window.location.origin}/comanda/nova?tipo=individual&estabelecimentoId=${estabelecimentoId}`;
                                 window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeUrl)}`, '_blank');
                                 toast.success('QR Code aberto em nova aba!');
                             }}
@@ -279,7 +292,8 @@ export default function MesasPage() {
                         </button>
                         <button
                             onClick={() => {
-                                const qrCodeUrl = `${window.location.origin}/comanda/nova?tipo=individual`;
+                                if (!estabelecimentoId) { toast.error('Estabelecimento não identificado'); return; }
+                                const qrCodeUrl = `${window.location.origin}/comanda/nova?tipo=individual&estabelecimentoId=${estabelecimentoId}`;
                                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeUrl)}`;
                                 const a = document.createElement('a');
                                 a.href = qrImageUrl;

@@ -1,4 +1,5 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -192,7 +193,7 @@ function AcompanharPedidoContent() {
 
     const carregarComanda = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/comandas/codigo/${comandaCodigo}`);
+            const response = await fetch(`${config.apiUrl}/comandas/codigo/${comandaCodigo}`);
             if (response.ok) {
                 const data = await response.json();
                 setComanda({ ...data, totalEstimado: Number(data.totalEstimado) });

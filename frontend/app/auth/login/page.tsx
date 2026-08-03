@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LoginAdminPage() {
     const [email, setEmail] = useState('');
@@ -66,8 +67,7 @@ export default function LoginAdminPage() {
                 </div>
                 <div className="relative z-10 p-16 max-w-2xl">
                     <div className="flex items-center gap-3 mb-8">
-                        <span className="material-symbols-outlined text-primary-container text-4xl" style={{"fontVariationSettings":"'FILL' 1"}}>restaurant</span>
-                        <h1 className="text-3xl font-extrabold tracking-tighter text-white font-display">Comanda Digital</h1>
+                        <Image src="/logos/logo-dine-horizontal.svg" alt="DINE Gestão Gastronômica" width={160} height={40} priority />
                     </div>
                     <h2 className="text-5xl font-extrabold font-display text-white leading-[1.1] mb-6 tracking-tight">
                         Culinary <span className="text-primary-container">Kineticism</span> em cada detalhe.
@@ -187,7 +187,7 @@ export default function LoginAdminPage() {
                         <a className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-white transition-colors" href="#">Termos</a>
                         <a className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-white transition-colors" href="#">Suporte</a>
                     </div>
-                    <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant/40">© 2024 Comanda Digital. Culinary Kineticism.</p>
+                    <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant/40">© {new Date().getFullYear()} DINE Gestão Gastronômica.</p>
                 </div>
             </footer>
         </main>

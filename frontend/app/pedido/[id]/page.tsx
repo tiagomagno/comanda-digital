@@ -1,4 +1,5 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -12,6 +13,9 @@ interface Pedido {
     status: string;
     total: number;
     createdAt: string;
+    comanda: {
+        estabelecimentoId: string;
+    };
     itens: {
         id: string;
         quantidade: number;
@@ -33,36 +37,44 @@ export default function AcompanhamentoPedidoPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        carregarPedido();
+        let socket: ReturnType<typeof io> | null = null;
+        let estabelecimentoId: string | null = null;
 
-        // Conectar ao WebSocket
-        const socket = io('http://localhost:3001');
+        carregarPedido().then((data) => {
+            if (!data) return;
 
-        // Entrar na sala do estabelecimento
-        socket.emit('join:estabelecimento', 'estab-seed-001');
+            estabelecimentoId = data.comanda.estabelecimentoId;
 
-        // Escutar atualizações de pedido
-        socket.on('pedido:atualizado', (data) => {
-            if (data.id === pedidoId) {
-                console.log('Pedido atualizado via WebSocket:', data);
-                setPedido(data);
-            }
+            // Conectar ao WebSocket somente após saber a sala correta
+            socket = io(config.socketUrl);
+            socket.emit('join:estabelecimento', estabelecimentoId);
+
+            socket.on('pedido:atualizado', (payload) => {
+                if (payload.id === pedidoId) {
+                    console.log('Pedido atualizado via WebSocket:', payload);
+                    setPedido(payload);
+                }
+            });
         });
 
         // Cleanup ao desmontar
         return () => {
-            socket.emit('leave:estabelecimento', 'estab-seed-001');
-            socket.disconnect();
+            if (socket && estabelecimentoId) {
+                socket.emit('leave:estabelecimento', estabelecimentoId);
+                socket.disconnect();
+            }
         };
     }, [pedidoId]);
 
-    const carregarPedido = async () => {
+    const carregarPedido = async (): Promise<Pedido | null> => {
         try {
-            const response = await fetch(`http://localhost:3001/api/pedidos/${pedidoId}`);
+            const response = await fetch(`${config.apiUrl}/pedidos/${pedidoId}`);
             const data = await response.json();
             setPedido(data);
+            return data;
         } catch (error) {
             console.error('Erro ao carregar pedido:', error);
+            return null;
         } finally {
             setLoading(false);
         }

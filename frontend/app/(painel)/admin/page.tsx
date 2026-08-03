@@ -1,5 +1,6 @@
 'use client';
 
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Download, RefreshCw, Smartphone, QrCode } from 'lucide-react';
@@ -108,7 +109,7 @@ export default function AdminPage() {
 
                 {loading ? (
                     <div className="text-center py-10">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+                        <LoadingSpinner size="lg" />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

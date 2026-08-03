@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 
 function CadastroContent() {
     const router = useRouter();
@@ -134,7 +135,7 @@ function CadastroContent() {
                             Tudo pronto!
                         </h1>
                         <p className="text-on-surface-variant text-lg leading-relaxed mb-10">
-                            Bem-vindo ao Comanda Digital. Agora você já pode começar a configurar seu estabelecimento e revolucionar sua operação.
+                            Bem-vindo ao DINE. Agora você já pode começar a configurar seu estabelecimento e revolucionar sua operação.
                         </p>
 
                         <div className="glass-card rounded-2xl p-8 mb-6 text-left">
@@ -163,7 +164,7 @@ function CadastroContent() {
                 <footer className="bg-surface-container-lowest border-t border-white/5 py-8 w-full">
                     <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-[10px] font-label uppercase tracking-widest text-neutral-500">
-                            © 2024 Comanda Digital. Culinary Kineticism.
+                            © {new Date().getFullYear()} DINE Gestão Gastronômica. Culinary Kineticism.
                         </p>
                         <div className="flex gap-8">
                             <a className="text-[10px] font-label uppercase tracking-widest text-neutral-500 hover:text-primary transition-colors" href="#">Suporte</a>
@@ -184,10 +185,7 @@ function CadastroContent() {
 
                 <div className="relative z-10 max-w-md w-full mx-auto">
                     {/* Branding Anchor */}
-                    <div className="mb-10 flex items-center gap-3">
-                        <span className="material-symbols-outlined text-primary-container text-4xl" style={{"fontVariationSettings":"'FILL' 1"}}>restaurant</span>
-                        <span className="text-xl font-display font-bold tracking-tight text-white">Comanda Digital</span>
-                    </div>
+                        <Image src="/logos/logo-dine-horizontal-bg-black.svg" alt="DINE" width={110} height={30} priority />
 
                     <div className="mb-8">
                         <h1 className="text-3xl md:text-4xl font-display font-extrabold tracking-tight text-on-surface mb-3 leading-tight">
@@ -454,7 +452,7 @@ function CadastroContent() {
             <footer className="absolute bottom-0 left-0 right-0 bg-transparent py-6 w-full z-20">
                 <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-[10px] font-label uppercase tracking-widest text-neutral-500">
-                        © 2024 Comanda Digital. Culinary Kineticism.
+                        © {new Date().getFullYear()} DINE Gestão Gastronômica. Culinary Kineticism.
                     </p>
                     <div className="flex gap-8">
                         <a className="text-[10px] font-label uppercase tracking-widest text-neutral-500 hover:text-primary transition-colors" href="#">Suporte</a>

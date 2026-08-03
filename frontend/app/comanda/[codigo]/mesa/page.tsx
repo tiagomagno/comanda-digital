@@ -1,4 +1,5 @@
 'use client';
+import { config } from "@/lib/config";
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -40,7 +41,7 @@ export default function EscanearMesaPage() {
         try {
             const comandaId = localStorage.getItem('comandaId');
 
-            const response = await fetch(`http://localhost:3001/api/comandas/${comandaId}/status`, {
+            const response = await fetch(`${config.apiUrl}/comandas/${comandaId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

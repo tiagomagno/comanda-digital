@@ -567,7 +567,7 @@ function SidebarStep1() {
                 <span className="material-symbols-outlined text-white text-3xl">restaurant_menu</span>
             </div>
             <div>
-                <p className="text-white font-bold text-2xl">Comanda Digital</p>
+                <p className="text-white font-bold text-2xl">Dine</p>
                 <p className="text-white/50 text-sm mt-1">Gestão Inteligente para Restaurantes</p>
             </div>
             <div className="mt-2 flex flex-col gap-3 w-full text-left">
@@ -867,7 +867,7 @@ function Step5({ data, onChange, onNext, onBack, isLoading }: Step5Props) {
             <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-6">
                 <div className="h-48 overflow-y-auto pr-2 text-sm text-gray-600 leading-relaxed space-y-4 scrollbar-thin">
                     <p className="font-bold text-gray-900 text-base">1. Introdução</p>
-                    <p>Bem-vindo à Comanda Digital. Estes Termos de Uso regulam o acesso e utilização da nossa plataforma SaaS. Ao criar uma conta, você concorda com o tratamento de seus dados pessoais conforme descrito em nossa Política de Privacidade.</p>
+                    <p>Bem-vindo à Dine. Estes Termos de Uso regulam o acesso e utilização da nossa plataforma SaaS. Ao criar uma conta, você concorda com o tratamento de seus dados pessoais conforme descrito em nossa Política de Privacidade.</p>
                     <p className="font-bold text-gray-900 text-base">2. Dados e Privacidade (LGPD)</p>
                     <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD), garantimos transparência sobre como coletamos, usamos e protegemos suas informações. Seus dados serão utilizados apenas para fins de prestação de serviço e melhoria da experiência do usuário.</p>
                     <p className="font-bold text-gray-900 text-base">3. Responsabilidades do Usuário</p>
@@ -1011,7 +1011,7 @@ function StepSuccess() {
                     <div className="w-8 h-8 text-[#FF5C01] bg-[#FF5C01]/10 rounded-lg flex items-center justify-center">
                         <span className="material-symbols-outlined text-[#FF5C01]">restaurant_menu</span>
                     </div>
-                    <h2 className="text-slate-900 text-xl font-bold leading-tight tracking-tight">Comanda Digital</h2>
+                    <h2 className="text-slate-900 text-xl font-bold leading-tight tracking-tight">Dine</h2>
                 </div>
                 <div className="hidden sm:flex gap-3">
                     <button className="flex items-center justify-center rounded-lg h-9 px-4 border border-slate-200 text-slate-900 text-sm font-bold hover:bg-slate-50 transition-colors">
@@ -1045,7 +1045,7 @@ function StepSuccess() {
                             <span className="text-xl md:text-2xl font-semibold text-slate-600 block mt-2">Sua conta foi criada com sucesso</span>
                         </h1>
                         <p className="text-slate-500 text-base md:text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-                            Bem-vindo ao Comanda Digital. Agora você já pode começar a configurar seu estabelecimento e revolucionar sua operação.
+                            Bem-vindo ao Dine. Agora você já pode começar a configurar seu estabelecimento e revolucionar sua operação.
                         </p>
 
                         {/* Action Card Section */}
@@ -1155,7 +1155,7 @@ export default function CadastroPage() {
                         <div className="bg-[#FF5C01]/10 p-1.5 rounded-lg">
                             <span className="material-symbols-outlined text-[#FF5C01] text-xl">restaurant_menu</span>
                         </div>
-                        <span className="hidden sm:inline">Comanda Digital</span>
+                        <span className="hidden sm:inline">Dine</span>
                     </div>
                     {/* Steps — lado direito */}
                     <div className="w-full max-w-xl">
@@ -1179,7 +1179,7 @@ export default function CadastroPage() {
                 )}
 
                 <p className="text-xs text-gray-400 text-center mt-8">
-                    © 2025 Comanda Digital. Todos os direitos reservados.
+                    © 2025 Dine. Todos os direitos reservados.
                 </p>
             </main>
 

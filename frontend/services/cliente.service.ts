@@ -15,14 +15,19 @@ export const clienteService = {
         return response.data;
     },
 
-    visualizarCardapio: async (estabelecimentoId: string) => {
+    visualizarCardapio: async (estabelecimentoId: string): Promise<{ categorias: any[]; pedidoMinimo: number | null }> => {
         const response = await api.get(`/cliente/cardapio/${estabelecimentoId}`);
         return response.data;
     },
 
-    criarPedido: async (dados: { comandaId: string, itens: any[], observacoes?: string }) => {
+    criarPedido: async (dados: { comandaId: string; itens: any[]; observacoes?: string; cupomCodigo?: string }) => {
         const response = await api.post('/cliente/pedidos', dados);
         return response.data;
+    },
+
+    validarCupom: async (dados: { codigo: string; estabelecimentoId: string; total: number }) => {
+        const response = await api.post('/cupons/validar', dados);
+        return response.data as { valido: boolean; cupomId: string; desconto: number; tipo: string; mensagem: string };
     },
 
     obterComanda: async (codigo: string) => {

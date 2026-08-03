@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { User } from '@/types/auth';
 import { authService } from '@/services/auth.service';
 import Cookies from 'js-cookie';
@@ -15,80 +15,67 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+// Lista de rotas que não exigem login
+const PUBLIC_ROUTES = [
+    '/', 
+    '/auth/login', 
+    '/auth/esqueci-senha', 
+    '/auth/resetar-senha', 
+    '/cadastro', 
+    '/boas-vindas',
+    '/boas-vindas/completar-perfil',
+    '/acesso'
+];
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         const loadUser = async () => {
             const token = Cookies.get('token');
+            const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname?.startsWith('/cardapio');
+
             if (token) {
                 try {
-                    // Aqui poderíamos ter um endpoint /me no backend para validar o token e atualizar o user
-                    // Por enquanto vamos assumir que se tem token, está logado, mas o ideal é persistir o user
-                    // ou buscar do backend.
-                    const userData = localStorage.getItem('user');
-                    if (userData) {
-                        setUser(JSON.parse(userData));
-                    }
+                    const userData = await authService.me();
+                    setUser(userData);
+                    localStorage.setItem('user', JSON.stringify(userData));
                 } catch (error) {
+                    if (!isPublicRoute) {
+                        logout();
+                    } else {
+                        Cookies.remove('token');
+                        localStorage.removeItem('user');
+                        setUser(null);
+                    }
+                }
+            } else {
+                if (!isPublicRoute) {
                     logout();
+                } else {
+                    setUser(null);
                 }
             }
             setIsLoading(false);
         };
         loadUser();
-    }, []);
+    }, [pathname]);
 
     const login = async (codigo: string) => {
         try {
-            console.log('🚀 Starting login with code:', codigo);
             const response = await authService.login(codigo);
-            console.log('🔐 Login response:', response);
-
             const { token, user } = response;
 
-            console.log('🔑 Token:', token);
-            console.log('👤 User:', user);
+            if (!token) throw new Error('Token não recebido do servidor');
+            if (!user)  throw new Error('Dados do usuário não recebidos do servidor');
 
-            if (!token) {
-                throw new Error('Token not received from backend');
-            }
-
-            if (!user) {
-                throw new Error('User data not received from backend');
-            }
-
-            try {
-                Cookies.set('token', token, { expires: 1 }); // 1 dia
-                console.log('✅ Token saved to cookies');
-            } catch (cookieError) {
-                console.error('❌ Error saving token to cookies:', cookieError);
-            }
-
-            try {
-                localStorage.setItem('user', JSON.stringify(user));
-                console.log('✅ User saved to localStorage');
-            } catch (storageError) {
-                console.error('❌ Error saving user to localStorage:', storageError);
-            }
-
-            try {
-                localStorage.setItem('token', token); // Para o axios interceptor
-                console.log('✅ Token saved to localStorage');
-            } catch (storageError) {
-                console.error('❌ Error saving token to localStorage:', storageError);
-            }
-
+            Cookies.set('token', token, { expires: 1 });
+            localStorage.setItem('user', JSON.stringify(user));
             setUser(user);
-            console.log('✅ User state updated');
 
-            // Pequeno delay para garantir que o localStorage seja persistido
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Redirecionamento baseado no role
-            console.log('🔄 Redirecting based on role:', user.role);
             switch (user.role) {
                 case 'GESTOR':
                 case 'ADMIN':
@@ -123,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch { /* noop */ }
 
         Cookies.remove('token');
-        localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
 

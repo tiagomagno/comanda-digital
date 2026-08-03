@@ -1,5 +1,6 @@
 'use client';
 
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -91,7 +92,7 @@ export default function ComandaDetailsPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <LoadingSpinner size="lg" />
             </div>
         );
     }
@@ -178,16 +179,23 @@ export default function ComandaDetailsPage() {
                                             <p className="text-sm font-medium text-gray-900">
                                                 {new Date(pedido.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
-                                            <p className={`text-xs font-bold ${pedido.status === 'criado' ? 'text-blue-600' :
-                                                    pedido.status === 'cancelado' ? 'text-red-600' :
-                                                        'text-green-600'
-                                                }`}>
-                                                {pedido.status.toUpperCase().replace('_', ' ')}
-                                            </p>
+                                            {pedido.status === 'aguardando_pagamento' ? (
+                                                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-0.5">
+                                                    <Clock className="w-3 h-3" />
+                                                    Cobrança eletrônica em andamento
+                                                </span>
+                                            ) : (
+                                                <p className={`text-xs font-bold ${pedido.status === 'criado' ? 'text-blue-600' :
+                                                        pedido.status === 'cancelado' ? 'text-red-600' :
+                                                            'text-green-600'
+                                                    }`}>
+                                                    {pedido.status.toUpperCase().replace('_', ' ')}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {pedido.status === 'criado' && (
+                                    {(pedido.status === 'criado' || pedido.status === 'aguardando_pagamento') && (
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => handleRejeitar(pedido.id)}
@@ -199,7 +207,7 @@ export default function ComandaDetailsPage() {
                                             <button
                                                 onClick={() => handleAprovar(pedido.id)}
                                                 className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                title="Aprovar"
+                                                title={pedido.status === 'aguardando_pagamento' ? 'Confirmar pagamento manualmente (a cobrança eletrônica ainda não foi confirmada)' : 'Aprovar'}
                                             >
                                                 <Check className="w-5 h-5" />
                                             </button>

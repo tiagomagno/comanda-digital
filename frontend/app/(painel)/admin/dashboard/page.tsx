@@ -1,5 +1,8 @@
 'use client';
 
+import { api } from '@/services/api';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,9 +14,10 @@ import {
     UtensilsCrossed,
     Coffee,
     BarChart3,
-    PieChart,
     ArrowRight,
     RefreshCw,
+    Star,
+    MessageSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,6 +30,11 @@ interface DashboardStats {
     comandasAtivas: number;
     produtosEmAlta: Array<{ nome: string; pedidos: number }>;
     estoqueEsgotado: Array<{ nome: string; disponivelEm: string }>;
+    avaliacoes?: {
+        total: number;
+        mediaAtendimento: number;
+        mediaComida: number;
+    };
 }
 
 export default function AdminDashboardPage() {
@@ -42,22 +51,8 @@ export default function AdminDashboardPage() {
 
     const carregarDashboard = async () => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                router.push('/auth/login');
-                return;
-            }
-            const mock: DashboardStats = {
-                receitaTotal: 0,
-                totalPedidos: 0,
-                salao: 0,
-                paraLevar: 0,
-                ticketMedio: 0,
-                comandasAtivas: 0,
-                produtosEmAlta: [],
-                estoqueEsgotado: [],
-            };
-            setStats(mock);
+            const data = await api.get<DashboardStats>('/gestor/dashboard');
+            setStats(data);
         } catch (error) {
             console.error('Erro ao carregar dashboard:', error);
             toast.error('Erro ao carregar dashboard');
@@ -70,7 +65,7 @@ export default function AdminDashboardPage() {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-orange-500 border-t-transparent mx-auto mb-3" />
+                    <LoadingSpinner size="lg" />
                     <p className="text-gray-600">Carregando dashboard...</p>
                 </div>
             </div>
@@ -178,6 +173,37 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Avaliações Overview */}
+            {stats?.avaliacoes && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                            Satisfação do Cliente
+                        </h3>
+                        <div className="text-sm text-gray-500">
+                            Baseado em <span className="font-bold text-gray-900">{stats.avaliacoes.total}</span> avaliações
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                            <p className="text-sm font-medium text-gray-500 mb-1">Qualidade do Atendimento</p>
+                            <div className="flex items-end gap-2">
+                                <span className="text-2xl font-bold text-gray-900">{stats.avaliacoes.mediaAtendimento.toFixed(1)}</span>
+                                <span className="text-sm text-gray-500 mb-1">/ 5.0</span>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                            <p className="text-sm font-medium text-gray-500 mb-1">Qualidade da Comida</p>
+                            <div className="flex items-end gap-2">
+                                <span className="text-2xl font-bold text-gray-900">{stats.avaliacoes.mediaComida.toFixed(1)}</span>
+                                <span className="text-sm text-gray-500 mb-1">/ 5.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Gráficos - linha única */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

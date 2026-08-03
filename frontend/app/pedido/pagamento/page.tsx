@@ -1,9 +1,10 @@
 'use client';
+import { config } from "@/lib/config";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
+import { gatewayService, CobrancaPix, CobrancaCartao } from '@/services/gateway.service';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,6 +14,7 @@ interface Comanda {
     nomeCliente: string;
     mesaRelacao?: { numero: string };
     totalEstimado: number;
+    status: string;
 }
 
 type MetodoPagamento = 'pix' | 'credito' | 'debito' | 'dinheiro';
@@ -31,35 +33,74 @@ const OPCOES: OpcaoPagamento[] = [
     { id: 'dinheiro', label: 'Dinheiro', icon: 'payments', descricao: 'Pagamento em espécie' },
 ];
 
-// ─── Chave PIX fake (substituir pela real da API) ─────────────────────────────
-const CHAVE_PIX_ESTABELECIMENTO = '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986';
-
 // ─── Painel PIX ───────────────────────────────────────────────────────────────
 
-function PainelPix({ total }: { total: number }) {
+function PainelPix({ comandaCodigo, total }: { comandaCodigo: string; total: number }) {
+    const [cobranca, setCobranca] = useState<CobrancaPix | null>(null);
+    const [carregando, setCarregando] = useState(true);
+    const [erro, setErro] = useState<string | null>(null);
     const [copiado, setCopiado] = useState(false);
-    const pixPayload = `${CHAVE_PIX_ESTABELECIMENTO}5802BR5925Cardapio Digital Ltda6009SAO PAULO62070503***6304`;
+
+    useEffect(() => {
+        let cancelado = false;
+        setCarregando(true);
+        setErro(null);
+        gatewayService.iniciarCobranca({ comandaCodigo, metodo: 'pix' })
+            .then((resultado) => {
+                if (!cancelado) setCobranca(resultado as CobrancaPix);
+            })
+            .catch((err) => {
+                if (!cancelado) setErro(err.message || 'Erro ao gerar cobrança PIX');
+            })
+            .finally(() => {
+                if (!cancelado) setCarregando(false);
+            });
+        return () => { cancelado = true; };
+    }, [comandaCodigo]);
 
     const copiar = () => {
-        navigator.clipboard.writeText(pixPayload);
+        if (!cobranca?.copiaECola) return;
+        navigator.clipboard.writeText(cobranca.copiaECola);
         setCopiado(true);
         toast.success('Código PIX copiado!');
         setTimeout(() => setCopiado(false), 3000);
     };
+
+    if (carregando) {
+        return (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 flex flex-col items-center gap-4">
+                <div className="w-10 h-10 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-500">Gerando cobrança PIX...</p>
+            </div>
+        );
+    }
+
+    if (erro || !cobranca) {
+        return (
+            <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6 text-center space-y-2">
+                <span className="material-symbols-outlined text-red-500 text-3xl">error</span>
+                <p className="text-sm text-red-600 font-medium">{erro || 'Não foi possível gerar a cobrança PIX'}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-6">
             {/* QR Code */}
             <div className="flex flex-col items-center">
                 <div className="p-4 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
-                    <QRCodeSVG
-                        value={pixPayload}
-                        size={180}
-                        bgColor="#ffffff"
-                        fgColor="#0f172a"
-                        level="M"
-                        includeMargin={false}
-                    />
+                    {cobranca.qrCodeBase64 ? (
+                        <img
+                            src={`data:image/png;base64,${cobranca.qrCodeBase64}`}
+                            alt="QR Code PIX"
+                            width={180}
+                            height={180}
+                        />
+                    ) : (
+                        <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-slate-400 text-center px-4">
+                            QR Code indisponível — use o código copia e cola abaixo
+                        </div>
+                    )}
                 </div>
                 <p className="text-sm text-slate-500 mt-3 text-center">
                     Escaneie o QR Code com o app do seu banco
@@ -78,11 +119,12 @@ function PainelPix({ total }: { total: number }) {
                 <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">PIX Copia e Cola</p>
                 <div className="flex gap-2">
                     <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-500 font-mono truncate">
-                        {pixPayload.slice(0, 44)}...
+                        {cobranca.copiaECola ? `${cobranca.copiaECola.slice(0, 44)}...` : 'Indisponível'}
                     </div>
                     <button
                         onClick={copiar}
-                        className={`flex-shrink-0 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-1.5 ${copiado
+                        disabled={!cobranca.copiaECola}
+                        className={`flex-shrink-0 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-1.5 disabled:opacity-40 ${copiado
                             ? 'bg-green-500 text-white'
                             : 'bg-[#FF6B00] hover:bg-orange-600 text-white'
                             }`}
@@ -112,123 +154,49 @@ function PainelPix({ total }: { total: number }) {
 
 // ─── Painel Cartão ─────────────────────────────────────────────────────────────
 
-function PainelCartao({ tipo }: { tipo: 'credito' | 'debito' }) {
-    const [numero, setNumero] = useState('');
-    const [nome, setNome] = useState('');
-    const [validade, setValidade] = useState('');
-    const [cvv, setCvv] = useState('');
-
-    const formatarNumero = (v: string) => {
-        const digits = v.replace(/\D/g, '').slice(0, 16);
-        return digits.replace(/(.{4})/g, '$1 ').trim();
-    };
-
-    const formatarValidade = (v: string) => {
-        const digits = v.replace(/\D/g, '').slice(0, 4);
-        if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-        return digits;
-    };
-
+function PainelCartao({ tipo, comandaCodigo, redirecionando, onPagar }: {
+    tipo: 'credito' | 'debito';
+    comandaCodigo: string;
+    redirecionando: boolean;
+    onPagar: () => void;
+}) {
     return (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5">
-            {/* Preview do cartão */}
-            <div className={`w-full aspect-[1.586/1] rounded-2xl p-5 flex flex-col justify-between text-white shadow-xl ${tipo === 'credito'
+            <div className={`w-full aspect-[1.586/1] rounded-2xl p-5 flex flex-col justify-center items-center text-white shadow-xl ${tipo === 'credito'
                 ? 'bg-gradient-to-br from-slate-800 to-slate-950'
                 : 'bg-gradient-to-br from-[#FF6B00] to-orange-800'
                 }`}>
-                <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold uppercase tracking-widest opacity-70">
-                        {tipo === 'credito' ? 'Crédito' : 'Débito'}
-                    </span>
-                    <span className="material-symbols-outlined text-3xl opacity-60">credit_card</span>
-                </div>
-                <div>
-                    <p className="font-mono text-lg tracking-widest mb-3 opacity-90">
-                        {numero || '•••• •••• •••• ••••'}
-                    </p>
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <p className="text-[10px] uppercase opacity-50 mb-0.5">Titular</p>
-                            <p className="text-sm font-semibold tracking-wide uppercase">{nome || 'NOME DO TITULAR'}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] uppercase opacity-50 mb-0.5">Validade</p>
-                            <p className="text-sm font-mono">{validade || 'MM/AA'}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Número */}
-            <div>
-                <label className="block text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1.5" htmlFor="card-numero">
-                    Número do Cartão
-                </label>
-                <input
-                    id="card-numero"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="0000 0000 0000 0000"
-                    value={numero}
-                    onChange={(e) => setNumero(formatarNumero(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:border-transparent"
-                />
-            </div>
-
-            {/* Nome */}
-            <div>
-                <label className="block text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1.5" htmlFor="card-nome">
-                    Nome do Titular
-                </label>
-                <input
-                    id="card-nome"
-                    type="text"
-                    placeholder="Como está no cartão"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value.toUpperCase())}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:border-transparent uppercase"
-                />
-            </div>
-
-            {/* Validade + CVV */}
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    <label className="block text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1.5" htmlFor="card-validade">
-                        Validade
-                    </label>
-                    <input
-                        id="card-validade"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="MM/AA"
-                        value={validade}
-                        onChange={(e) => setValidade(formatarValidade(e.target.value))}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:border-transparent"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1.5" htmlFor="card-cvv">
-                        CVV
-                    </label>
-                    <input
-                        id="card-cvv"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="•••"
-                        maxLength={4}
-                        value={cvv}
-                        onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:border-transparent"
-                    />
-                </div>
+                <span className="material-symbols-outlined text-4xl opacity-80 mb-2">credit_card</span>
+                <span className="text-sm font-bold uppercase tracking-widest opacity-90">
+                    {tipo === 'credito' ? 'Cartão de Crédito' : 'Cartão de Débito'}
+                </span>
             </div>
 
             <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-100 rounded-xl">
                 <span className="material-symbols-outlined text-slate-400 flex-shrink-0 text-xl">lock</span>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                    Seus dados são criptografados e protegidos. Não armazenamos informações do cartão.
+                    Você será redirecionado para o ambiente seguro do Mercado Pago para inserir os dados do cartão.
+                    A Dine nunca tem acesso ao número do seu cartão.
                 </p>
             </div>
+
+            <button
+                onClick={onPagar}
+                disabled={redirecionando}
+                className="w-full bg-[#FF6B00] hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+                {redirecionando ? (
+                    <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Redirecionando...
+                    </>
+                ) : (
+                    <>
+                        <span className="material-symbols-outlined text-lg">open_in_new</span>
+                        Pagar com Cartão
+                    </>
+                )}
+            </button>
         </div>
     );
 }
@@ -275,7 +243,7 @@ function PainelDinheiro({ total, comanda }: { total: number; comanda: Comanda | 
             <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-100 rounded-xl">
                 <span className="material-symbols-outlined text-amber-500 flex-shrink-0 text-xl">warning</span>
                 <p className="text-xs text-amber-700 leading-relaxed">
-                    Após clicar em <strong>"Confirmar Pagamento"</strong>, um atendente irá até você ou você poderá se dirigir ao caixa.
+                    Após clicar em <strong>"Solicitar Atendente"</strong>, um atendente irá até você ou você poderá se dirigir ao caixa.
                 </p>
             </div>
         </div>
@@ -293,37 +261,70 @@ function PagamentoContent() {
     const [loading, setLoading] = useState(true);
     const [metodo, setMetodo] = useState<MetodoPagamento | null>(null);
     const [confirmando, setConfirmando] = useState(false);
+    const [redirecionandoCartao, setRedirecionandoCartao] = useState(false);
+    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    useEffect(() => {
-        if (comandaCodigo) carregarComanda();
-    }, [comandaCodigo]);
-
-    const carregarComanda = async () => {
+    const carregarComanda = useCallback(async (): Promise<Comanda | null> => {
+        if (!comandaCodigo) return null;
         try {
-            const res = await fetch(`http://localhost:3001/api/comandas/codigo/${comandaCodigo}`);
+            const res = await fetch(`${config.apiUrl}/comandas/codigo/${comandaCodigo}`);
             if (res.ok) {
                 const data = await res.json();
-                setComanda({ ...data, totalEstimado: Number(data.totalEstimado) });
-            } else {
-                toast.error('Comanda não encontrada');
+                const comandaAtualizada = { ...data, totalEstimado: Number(data.totalEstimado) };
+                setComanda(comandaAtualizada);
+                return comandaAtualizada;
             }
+            toast.error('Comanda não encontrada');
+            return null;
         } catch {
             toast.error('Erro ao conectar com o servidor');
-        } finally {
-            setLoading(false);
+            return null;
+        }
+    }, [comandaCodigo]);
+
+    useEffect(() => {
+        carregarComanda().finally(() => setLoading(false));
+    }, [carregarComanda]);
+
+    // Polling automático de confirmação de pagamento eletrônico (PIX/Cartão)
+    useEffect(() => {
+        const acompanhandoPagamentoEletronico = metodo === 'pix' || metodo === 'credito' || metodo === 'debito';
+
+        if (!acompanhandoPagamentoEletronico) {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            return;
+        }
+
+        pollingRef.current = setInterval(async () => {
+            const atualizada = await carregarComanda();
+            if (atualizada?.status === 'paga') {
+                if (pollingRef.current) clearInterval(pollingRef.current);
+                toast.success('Pagamento confirmado! 🎉');
+                setTimeout(() => router.push(`/pedido/acompanhar?comanda=${comandaCodigo}`), 1500);
+            }
+        }, 5000);
+
+        return () => {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+        };
+    }, [metodo, carregarComanda, comandaCodigo, router]);
+
+    const handlePagarCartao = async () => {
+        if (!comandaCodigo) return;
+        setRedirecionandoCartao(true);
+        try {
+            const resultado = await gatewayService.iniciarCobranca({ comandaCodigo, metodo: 'cartao' });
+            window.location.href = (resultado as CobrancaCartao).checkoutUrl;
+        } catch (err: any) {
+            toast.error(err.message || 'Erro ao iniciar pagamento com cartão');
+            setRedirecionandoCartao(false);
         }
     };
 
-    const confirmarPagamento = async () => {
-        if (!metodo) { toast.error('Selecione um método de pagamento'); return; }
+    const confirmarPagamentoDinheiro = async () => {
         setConfirmando(true);
         try {
-            // TODO: chamar API para fechar comanda
-            // await fetch(`http://localhost:3001/api/comandas/${comanda?.id}/fechar`, { method: 'POST', body: JSON.stringify({ metodo }) })
-            toast.success('Pagamento registrado! Obrigado! 🎉');
-            setTimeout(() => router.push('/comanda/nova'), 1500);
-        } catch {
-            toast.error('Erro ao processar pagamento');
+            toast.success('Atendente avisado! Dirija-se ao caixa para finalizar o pagamento.');
         } finally {
             setConfirmando(false);
         }
@@ -426,40 +427,44 @@ function PagamentoContent() {
                 </section>
 
                 {/* ── Painel do método selecionado ── */}
-                {metodo === 'pix' && <PainelPix total={total} />}
-                {(metodo === 'credito' || metodo === 'debito') && <PainelCartao tipo={metodo} />}
+                {metodo === 'pix' && comandaCodigo && <PainelPix comandaCodigo={comandaCodigo} total={total} />}
+                {(metodo === 'credito' || metodo === 'debito') && comandaCodigo && (
+                    <PainelCartao tipo={metodo} comandaCodigo={comandaCodigo} redirecionando={redirecionandoCartao} onPagar={handlePagarCartao} />
+                )}
                 {metodo === 'dinheiro' && <PainelDinheiro total={total} comanda={comanda} />}
             </main>
 
-            {/* ── Footer Fixo ──────────────────────────────────────────────── */}
-            <footer className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 p-4 pb-8 shadow-lg">
-                <div className="max-w-2xl mx-auto">
-                    <div className="flex justify-between items-baseline mb-4">
-                        <p className="text-slate-500 text-sm font-medium">Total</p>
-                        <p className="text-2xl font-black text-[#FF6B00]" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                            R$ {total.toFixed(2)}
-                        </p>
+            {/* ── Footer Fixo (apenas para o caminho manual/dinheiro) ────────── */}
+            {metodo === 'dinheiro' && (
+                <footer className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 p-4 pb-8 shadow-lg">
+                    <div className="max-w-2xl mx-auto">
+                        <div className="flex justify-between items-baseline mb-4">
+                            <p className="text-slate-500 text-sm font-medium">Total</p>
+                            <p className="text-2xl font-black text-[#FF6B00]" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                                R$ {total.toFixed(2)}
+                            </p>
+                        </div>
+                        <button
+                            id="btn-confirmar-pagamento"
+                            onClick={confirmarPagamentoDinheiro}
+                            disabled={confirmando}
+                            className="w-full bg-[#FF6B00] hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+                        >
+                            {confirmando ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Processando...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined">check_circle</span>
+                                    Solicitar Atendente
+                                </>
+                            )}
+                        </button>
                     </div>
-                    <button
-                        id="btn-confirmar-pagamento"
-                        onClick={confirmarPagamento}
-                        disabled={!metodo || confirmando}
-                        className="w-full bg-[#FF6B00] hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
-                    >
-                        {confirmando ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Processando...
-                            </>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined">check_circle</span>
-                                {metodo === 'dinheiro' ? 'Solicitar Atendente' : 'Confirmar Pagamento'}
-                            </>
-                        )}
-                    </button>
-                </div>
-            </footer>
+                </footer>
+            )}
         </div>
     );
 }
