@@ -1,4 +1,4 @@
-# 📋 Resumo Executivo do Projeto
+﻿# 📋 Resumo Executivo do Projeto
 
 ## 🎯 Visão Geral
 
@@ -247,7 +247,7 @@ Sistema digital de comandas com:
 ## 📁 Estrutura do Projeto
 
 ```
-comanda-digital/
+dine/
 ├── backend/              # API e lógica de negócio
 ├── frontend/             # Interface do usuário (PWA)
 ├── database/             # Schemas e migrations

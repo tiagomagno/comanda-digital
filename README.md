@@ -1,8 +1,8 @@
-# 🧠 Sistema de Comandas Digitais para Bares e Restaurantes (MVP)
+﻿# 🧠 Sistema de Comandas Digitais para Bares e Restaurantes (MVP)
 
 ## 🎯 Objetivo do Projeto
 
-Sistema de comanda digital voltado para bares e restaurantes, com foco inicial exclusivamente no **módulo de comanda**, permitindo:
+Sistema de Dine voltado para bares e restaurantes, com foco inicial exclusivamente no **módulo de comanda**, permitindo:
 
 - ✅ Controle de pedidos via QR Code
 - ✅ Suporte a comanda individual (sem obrigatoriedade de mesa)
@@ -264,7 +264,7 @@ O sistema deve suportar:
 ## 📂 Estrutura do Projeto
 
 ```
-comanda-digital/
+dine/
 ├── backend/          # API e lógica de negócio
 ├── frontend/         # Interface do usuário
 ├── database/         # Schemas e migrations

@@ -1,4 +1,32 @@
-# 📚 Índice da Documentação - Sistema de Comandas Digitais
+﻿# Índice de Documentação — Dine
+
+> Atualizado em: 2026-06-30 | Documentação refatorada completa
+
+> **NOTA HISTÓRICA:** Arquivo original mantido abaixo. Nova estrutura em `docs/README.md`.
+
+---
+
+## Nova Estrutura (2026-06-30)
+
+Ver `docs/README.md` para o índice completo da documentação refatorada.
+
+Estrutura:
+- `audit/` — Auditoria do projeto e documentação
+- `business/` — Planos, billing, monetização
+- `backend/` — Arquitetura, auth, rotas, middlewares
+- `frontend/` — Arquitetura Next.js
+- `database/` — ER model, migrations, convenções
+- `api/` — Overview da API REST
+- `modules/` — Documentação por módulo (20 módulos)
+- `development/` — Setup e convenções
+- `prompts/` — Prompts de IA reutilizáveis
+- `adr/` — Decisões arquiteturais (6 ADRs)
+
+---
+
+## Índice Original (Histórico)
+
+# Índice da Documentação - Sistema de Comandas Digitais
 
 Bem-vindo à documentação completa do projeto! Este índice irá guiá-lo através de todos os documentos disponíveis.
 
@@ -305,7 +333,7 @@ Documentos recomendados:
 
 ---
 
-**Documentação criada com ❤️ para o projeto Comanda Digital**
+**Documentação criada com ❤️ para o projeto Dine**
 
 **Status:** ✅ Completa e pronta para uso  
 **Última atualização:** 29/12/2025  

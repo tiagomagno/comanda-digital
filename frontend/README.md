@@ -1,4 +1,4 @@
-# Frontend - Sistema de Comandas Digitais
+﻿# Frontend - Sistema de Comandas Digitais
 
 Interface web responsiva (PWA) para o sistema de comandas digitais.
 
@@ -148,7 +148,7 @@ O aplicativo é configurado como PWA, permitindo:
 
 ```json
 {
-  "name": "Comanda Digital",
+  "name": "Dine",
   "short_name": "Comanda",
   "description": "Sistema de Comandas Digitais",
   "start_url": "/",

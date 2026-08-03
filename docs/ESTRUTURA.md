@@ -1,9 +1,9 @@
-# 📂 Estrutura do Projeto - Comanda Digital
+﻿# 📂 Estrutura do Projeto - Dine
 
 ## 📁 Visão Geral Atual
 
 ```
-comanda-digital/
+dine/
 ├── 📄 .env.example              # Template de variáveis de ambiente
 ├── 📄 .gitignore                # Arquivos ignorados pelo Git
 ├── 📄 README.md                 # Documentação principal do projeto

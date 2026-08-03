@@ -1,4 +1,4 @@
-# Documentação do Frontend - Comanda Digital
+﻿# Documentação do Frontend - Dine
 
 Este projeto foi atualizado com todos os módulos funcionais.
 

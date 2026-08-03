@@ -1,4 +1,4 @@
-# 🚀 Guia de Início Rápido
+﻿# 🚀 Guia de Início Rápido
 
 ## Pré-requisitos
 
@@ -14,7 +14,7 @@ Antes de começar, certifique-se de ter instalado:
 ### 1. Clone o repositório (ou use a pasta existente)
 
 ```bash
-cd C:\Projects\comanda-digital
+cd C:\Projects\dine
 ```
 
 ### 2. Configure o Banco de Dados
@@ -26,7 +26,7 @@ cd C:\Projects\comanda-digital
 psql -U postgres
 
 # Crie o banco de dados
-CREATE DATABASE comanda_digital;
+CREATE DATABASE dine;
 
 # Saia do psql
 \q
@@ -35,7 +35,7 @@ CREATE DATABASE comanda_digital;
 #### Execute o schema
 
 ```bash
-psql -U postgres -d comanda_digital -f database/schema.sql
+psql -U postgres -d dine -f database/schema.sql
 ```
 
 ### 3. Configure as Variáveis de Ambiente
@@ -268,7 +268,7 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: comanda_digital
+      POSTGRES_DB: dine
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
