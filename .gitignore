@@ -67,3 +67,12 @@ public/uploads/
 # Cache
 .cache/
 .parcel-cache/
+
+# Segurança — nunca commitar
+token.txt
+*.key
+*.pem
+secrets.*
+
+# Configuração local pessoal do Claude Code
+.claude/settings.local.json
