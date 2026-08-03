@@ -28,6 +28,7 @@ export default function MesasPage() {
         capacidade: 4,
     });
     const [estabelecimentoId, setEstabelecimentoId] = useState('');
+    const [estabelecimentoSlug, setEstabelecimentoSlug] = useState('');
 
     useEffect(() => {
         carregarMesas();
@@ -36,7 +37,13 @@ export default function MesasPage() {
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                if (payload?.estabelecimentoId) setEstabelecimentoId(payload.estabelecimentoId);
+                if (payload?.estabelecimentoId) {
+                    setEstabelecimentoId(payload.estabelecimentoId);
+                    fetch(`${config.apiUrl}/cardapio/estabelecimento/${payload.estabelecimentoId}`)
+                        .then((r) => r.ok ? r.json() : null)
+                        .then((data) => { if (data?.slug) setEstabelecimentoSlug(data.slug); })
+                        .catch(() => {});
+                }
             } catch (e) {
                 console.error('Erro ao decodificar token', e);
             }
@@ -280,8 +287,8 @@ export default function MesasPage() {
                     <div className="flex gap-2">
                         <button
                             onClick={() => {
-                                if (!estabelecimentoId) { toast.error('Estabelecimento não identificado'); return; }
-                                const qrCodeUrl = `${window.location.origin}/comanda/nova?tipo=individual&estabelecimentoId=${estabelecimentoId}`;
+                                if (!estabelecimentoSlug) { toast.error('Estabelecimento não identificado'); return; }
+                                const qrCodeUrl = `${window.location.origin}/loja/${estabelecimentoSlug}`;
                                 window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeUrl)}`, '_blank');
                                 toast.success('QR Code aberto em nova aba!');
                             }}
@@ -292,8 +299,8 @@ export default function MesasPage() {
                         </button>
                         <button
                             onClick={() => {
-                                if (!estabelecimentoId) { toast.error('Estabelecimento não identificado'); return; }
-                                const qrCodeUrl = `${window.location.origin}/comanda/nova?tipo=individual&estabelecimentoId=${estabelecimentoId}`;
+                                if (!estabelecimentoSlug) { toast.error('Estabelecimento não identificado'); return; }
+                                const qrCodeUrl = `${window.location.origin}/loja/${estabelecimentoSlug}`;
                                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeUrl)}`;
                                 const a = document.createElement('a');
                                 a.href = qrImageUrl;

@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const loadUser = async () => {
             const token = Cookies.get('token');
-            const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname?.startsWith('/cardapio');
+            const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname?.startsWith('/loja') || pathname?.startsWith('/pedido');
 
             if (token) {
                 try {

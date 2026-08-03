@@ -9,6 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 interface Estabelecimento {
     id: string;
     nome: string;
+    slug: string | null;
 }
 
 // Credenciais dos usuários criados pelo seed (POST /api/seed-personas)
@@ -63,8 +64,8 @@ export default function AcessoPage() {
                         </p>
                     ) : (
                         <ul className="space-y-3">
-                            {estabelecimentos.map((e) => {
-                                const link = `${baseUrl}/cardapio/estabelecimento/${e.id}`;
+                            {estabelecimentos.filter((e) => e.slug).map((e) => {
+                                const link = `${baseUrl}/loja/${e.slug}`;
                                 return (
                                     <li key={e.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl">
                                         <div className="min-w-0 flex-1">
@@ -88,7 +89,7 @@ export default function AcessoPage() {
                                                 {copied === `card-${e.id}` ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                                             </button>
                                             <Link
-                                                href={`/cardapio/estabelecimento/${e.id}`}
+                                                href={`/loja/${e.slug}`}
                                                 target="_blank"
                                                 className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                                 title="Abrir cardápio"

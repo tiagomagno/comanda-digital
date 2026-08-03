@@ -5,6 +5,11 @@ import api from '@/lib/api';
 // O backend aceita requests públicos para essas rotas
 
 export const clienteService = {
+    resolverLoja: async (slug: string) => {
+        const response = await api.get(`/cardapio/loja/${slug}`);
+        return response.data as { id: string; nome: string; configuracoes: Record<string, unknown> };
+    },
+
     escanearMesa: async (estabelecimentoId: string, mesaId: string) => {
         const response = await api.get(`/cliente/mesa/${estabelecimentoId}/${mesaId}`);
         return response.data;
