@@ -1,4 +1,4 @@
-# 🎉 BACKEND 100% COMPLETO!
+﻿# 🎉 BACKEND 100% COMPLETO!
 
 ## ✅ O QUE FOI CRIADO
 
@@ -155,7 +155,7 @@
 
 ### 1. Instalar Dependências
 ```bash
-cd C:\Projects\comanda-digital\backend
+cd C:\Projects\dine\backend
 powershell -ExecutionPolicy Bypass -Command "npm install"
 ```
 

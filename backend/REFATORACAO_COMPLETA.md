@@ -1,8 +1,8 @@
-# ✅ Refatoração Completa - Sistema Comanda Digital
+﻿# ✅ Refatoração Completa - Sistema Dine
 
 ## 🎯 Resumo Executivo
 
-Refatoração completa do backend do sistema comanda-digital, estabelecendo uma arquitetura limpa, código reutilizável e manutenível.
+Refatoração completa do backend do sistema dine, estabelecendo uma arquitetura limpa, código reutilizável e manutenível.
 
 **Status:** ✅ **100% Completo**
 

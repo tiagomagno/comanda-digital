@@ -1,4 +1,4 @@
-# 🔧 Refatoração - Sistema Comanda Digital
+﻿# 🔧 Refatoração - Sistema Dine
 
 ## ✅ Implementações Realizadas
 
