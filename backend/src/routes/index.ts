@@ -16,6 +16,15 @@ import uploadRoutes from './upload.routes.js';
 import superAdminRoutes from './superadmin.routes.js';
 import assinaturaRoutes from './assinatura.routes.js';
 import gatewayRoutes from './gateway.routes.js';
+import pagamentoRoutes from './pagamento.routes.js';
+import avaliacaoRoutes from './avaliacao.routes.js';
+import cupomRoutes from './cupom.routes.js';
+import expedicaoRoutes from './expedicao.routes.js';
+import transacaoRoutes from './transacao.routes.js';
+import entregadorRoutes from './entregador.routes.js';
+import automacaoRoutes from './automacao.routes.js';
+import crmRoutes from './crm.routes.js';
+import omnichannelRoutes from './omnichannel.routes.js';
 import prisma from '../config/database.js';
 import bcrypt from 'bcryptjs';
 
@@ -72,6 +81,17 @@ router.use('/assinaturas', assinaturaRoutes);
 // Rotas do Gateway BYOG
 router.use('/gateways', gatewayRoutes);
 
+// Modulos Fase 1 (SaaS Evolution)
+router.use('/pagamentos-parciais', pagamentoRoutes);
+router.use('/avaliacoes', avaliacaoRoutes);
+router.use('/cupons', cupomRoutes);
+router.use('/expedicao', expedicaoRoutes);
+router.use('/transacoes', transacaoRoutes);
+router.use('/delivery', entregadorRoutes);
+router.use('/automacoes', automacaoRoutes);
+router.use('/crm', crmRoutes);
+router.use('/omnichannel', omnichannelRoutes);
+
 import { logger } from '../utils/logger.js';
 import { asyncHandler } from '../middlewares/error.middleware.js';
 
@@ -81,6 +101,10 @@ router.get('/ping', (_req, res) => {
 });
 
 router.post('/seed-personas', asyncHandler(async (_req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        res.status(403).json({ error: 'Endpoint desativado em produção' });
+        return;
+    }
     logger.info('🌱 Seeding Personas via API...');
     const senhaHash = await bcrypt.hash('123456', 10);
 
