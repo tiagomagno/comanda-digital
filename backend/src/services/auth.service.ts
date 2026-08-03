@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/database.js';
 import { NotFoundError, UnauthorizedError, BadRequestError, ConflictError } from '../types/errors.js';
 import { logger } from '../utils/logger.js';
+import { gerarSlugUnico } from '../utils/slug.js';
 
 interface LoginDTO {
     email?: string;
@@ -252,9 +253,11 @@ export class AuthService {
             .slice(0, 8);
 
         // Criar o estabelecimento
+        const slugLoja = await gerarSlugUnico(data.estabelecimento.nome);
         const estabelecimento = await prisma.estabelecimento.create({
             data: {
                 nome: data.estabelecimento.nome,
+                slug: slugLoja,
                 operaLocal: data.estabelecimento.operaLocal ?? false,
                 operaHospedado: data.estabelecimento.operaHospedado ?? false,
                 operaDelivery: data.estabelecimento.operaDelivery ?? false,

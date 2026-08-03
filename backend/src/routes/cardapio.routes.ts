@@ -13,7 +13,7 @@ const router = Router();
 router.get('/estabelecimentos', asyncHandler(async (_req, res) => {
     const estabelecimentos = await prisma.estabelecimento.findMany({
         where: { ativo: true },
-        select: { id: true, nome: true },
+        select: { id: true, nome: true, slug: true },
         orderBy: { nome: 'asc' },
     });
     res.json(estabelecimentos);
@@ -28,11 +28,31 @@ router.get('/estabelecimento/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
     const estab = await prisma.estabelecimento.findUnique({
         where: { id, ativo: true },
-        select: { id: true, nome: true, configuracoes: true },
+        select: { id: true, nome: true, slug: true, configuracoes: true },
     });
 
     if (!estab) {
         res.status(404).json({ error: 'Estabelecimento não encontrado' });
+        return;
+    }
+
+    res.json(estab);
+}));
+
+/**
+ * @route GET /api/cardapio/loja/:slug
+ * @desc Resolve o slug da loja pública para os dados do estabelecimento
+ * @access Public
+ */
+router.get('/loja/:slug', asyncHandler(async (req, res) => {
+    const { slug } = req.params;
+    const estab = await prisma.estabelecimento.findUnique({
+        where: { slug, ativo: true },
+        select: { id: true, nome: true, configuracoes: true },
+    });
+
+    if (!estab) {
+        res.status(404).json({ error: 'Loja não encontrada' });
         return;
     }
 

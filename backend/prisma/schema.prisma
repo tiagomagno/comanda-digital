@@ -13,6 +13,7 @@ datasource db {
 model Estabelecimento {
   id              String   @id @default(uuid())
   nome            String
+  slug            String?  @unique
   operaLocal      Boolean  @default(false) @map("opera_local")
   operaHospedado  Boolean  @default(false) @map("opera_hospedado")
   operaDelivery   Boolean  @default(false) @map("opera_delivery")

@@ -17,6 +17,20 @@ interface AtualizarMesaDTO {
 
 export class MesaService {
     /**
+     * Monta a URL da loja pública (com contexto de mesa) usada no QR Code
+     */
+    private async montarUrlLoja(estabelecimentoId: string, mesaId: string): Promise<string> {
+        const estabelecimento = await prisma.estabelecimento.findUnique({
+            where: { id: estabelecimentoId },
+            select: { slug: true },
+        });
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const slug = estabelecimento?.slug || estabelecimentoId;
+        return `${frontendUrl}/loja/${slug}?mesa=${mesaId}`;
+    }
+
+    /**
      * Listar mesas do estabelecimento
      */
     async listar(estabelecimentoId: string) {
@@ -94,10 +108,9 @@ export class MesaService {
             },
         });
 
-        // Gerar QR Code
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        const qrCodeUrl = `${frontendUrl}/mesa/${data.estabelecimentoId}/${mesa.id}`;
-        
+        // Gerar QR Code apontando para a loja pública, já com o contexto da mesa
+        const qrCodeUrl = await this.montarUrlLoja(data.estabelecimentoId, mesa.id);
+
         let qrCodeDataUrl: string | null = null;
         try {
             qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
@@ -193,9 +206,8 @@ export class MesaService {
         // Verificar se mesa existe
         await this.buscarPorId(id, estabelecimentoId);
 
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        const qrCodeUrl = `${frontendUrl}/mesa/${estabelecimentoId}/${id}`;
-        
+        const qrCodeUrl = await this.montarUrlLoja(estabelecimentoId, id);
+
         let qrCodeDataUrl: string | null = null;
         try {
             qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {

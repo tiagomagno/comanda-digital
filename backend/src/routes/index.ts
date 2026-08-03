@@ -94,6 +94,7 @@ router.use('/omnichannel', omnichannelRoutes);
 
 import { logger } from '../utils/logger.js';
 import { asyncHandler } from '../middlewares/error.middleware.js';
+import { gerarSlugUnico } from '../utils/slug.js';
 
 // Rota de teste
 router.get('/ping', (_req, res) => {
@@ -112,7 +113,8 @@ router.post('/seed-personas', asyncHandler(async (_req, res) => {
     const getOrCreateEstab = async (data: { nome: string; cnpj: string; email: string; ativo: boolean; configuracoes: object }) => {
         const existing = await prisma.estabelecimento.findFirst({ where: { cnpj: data.cnpj } });
         if (existing) return existing;
-        return await prisma.estabelecimento.create({ data });
+        const slug = await gerarSlugUnico(data.nome);
+        return await prisma.estabelecimento.create({ data: { ...data, slug } });
     };
 
     // --- PERSONA 1: Carlos (Bar) ---

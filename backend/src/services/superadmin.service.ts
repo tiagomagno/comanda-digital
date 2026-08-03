@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '../config/database.js';
 import { NotFoundError, ConflictError } from '../types/errors.js';
 import { logger } from '../utils/logger.js';
+import { gerarSlugUnico } from '../utils/slug.js';
 
 export class SuperAdminService {
 
@@ -207,9 +208,11 @@ export class SuperAdminService {
             if (cnpjExistente) throw new ConflictError('CNPJ já cadastrado');
         }
 
+        const slugLoja = await gerarSlugUnico(data.nome);
         const estabelecimento = await prisma.estabelecimento.create({
             data: {
                 nome: data.nome,
+                slug: slugLoja,
                 cnpj: data.cnpj,
                 telefone: data.telefone,
                 email: data.email,
