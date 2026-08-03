@@ -60,4 +60,15 @@ router.patch('/:id', validate(atualizarProdutoSchema), produtoController.atualiz
  */
 router.patch('/:id/disponibilidade', authMiddleware, adminMiddleware, validate(toggleDisponibilidadeSchema), produtoController.toggleDisponibilidade);
 
+// ─── Adicional Grupos ────────────────────────────────────────────────────────
+router.get('/:id/adicional-grupos', authMiddleware, produtoController.listarAdicionalGrupos);
+router.post('/:id/adicional-grupos', authMiddleware, adminMiddleware, produtoController.criarAdicionalGrupo);
+router.put('/:id/adicional-grupos/:grupoId', authMiddleware, adminMiddleware, produtoController.atualizarAdicionalGrupo);
+router.delete('/:id/adicional-grupos/:grupoId', authMiddleware, adminMiddleware, produtoController.deletarAdicionalGrupo);
+
+// ─── Adicionais (opções dentro de um grupo) ──────────────────────────────────
+router.post('/:id/adicional-grupos/:grupoId/opcoes', authMiddleware, adminMiddleware, produtoController.criarAdicional);
+router.put('/:id/adicional-grupos/:grupoId/opcoes/:adicionalId', authMiddleware, adminMiddleware, produtoController.atualizarAdicional);
+router.delete('/:id/adicional-grupos/:grupoId/opcoes/:adicionalId', authMiddleware, adminMiddleware, produtoController.deletarAdicional);
+
 export default router;

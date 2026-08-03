@@ -75,12 +75,47 @@ export const buscarCardapio = asyncHandler(async (req: AuthRequest, res: Respons
     const { estabelecimentoId } = req.query;
 
     if (!estabelecimentoId || typeof estabelecimentoId !== 'string') {
-        res.status(400).json({
-            error: 'estabelecimentoId é obrigatório',
-        });
+        res.status(400).json({ error: 'estabelecimentoId é obrigatório' });
         return;
     }
 
     const categorias = await produtoService.buscarCardapio(estabelecimentoId);
     res.json(categorias);
+});
+
+// ─── Adicional Grupos ────────────────────────────────────────────────────────
+
+export const listarAdicionalGrupos = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const grupos = await produtoService.listarAdicionalGrupos(req.params.id);
+    res.json(grupos);
+});
+
+export const criarAdicionalGrupo = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const grupo = await produtoService.criarAdicionalGrupo(req.params.id, req.body);
+    res.status(201).json(grupo);
+});
+
+export const atualizarAdicionalGrupo = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const grupo = await produtoService.atualizarAdicionalGrupo(req.params.grupoId, req.body);
+    res.json(grupo);
+});
+
+export const deletarAdicionalGrupo = asyncHandler(async (req: AuthRequest, res: Response) => {
+    await produtoService.deletarAdicionalGrupo(req.params.grupoId);
+    res.status(204).send();
+});
+
+export const criarAdicional = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const adic = await produtoService.criarAdicional(req.params.grupoId, req.body);
+    res.status(201).json(adic);
+});
+
+export const atualizarAdicional = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const adic = await produtoService.atualizarAdicional(req.params.adicionalId, req.body);
+    res.json(adic);
+});
+
+export const deletarAdicional = asyncHandler(async (req: AuthRequest, res: Response) => {
+    await produtoService.deletarAdicional(req.params.adicionalId);
+    res.status(204).send();
 });

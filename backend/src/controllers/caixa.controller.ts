@@ -6,6 +6,9 @@ import { BadRequestError } from '../types/errors.js';
 import prisma from '../config/database.js';
 import { calcularTotalComanda } from '../utils/comanda-utils.js';
 import { logger } from '../utils/logger.js';
+import { StatusPedido } from '@prisma/client';
+
+const STATUS_NAO_CANCELADO: { not: StatusPedido } = { not: 'cancelado' };
 
 /**
  * Listar comandas aguardando pagamento final
@@ -33,11 +36,7 @@ export const listarComandasPendentes = asyncHandler(async (req: AuthRequest, res
                 },
             },
             pedidos: {
-                where: {
-                    status: {
-                        in: ['pago', 'em_preparo', 'pronto', 'entregue'],
-                    },
-                },
+                where: { status: STATUS_NAO_CANCELADO },
                 include: {
                     itens: {
                         include: { produto: true },
@@ -74,53 +73,16 @@ export const processarPagamentoFinal = asyncHandler(async (req: AuthRequest, res
 
     const comanda = await prisma.comanda.findFirst({
         where: { id, estabelecimentoId },
-        include: {
-            pedidos: {
-                where: {
-                    status: {
-                        in: ['pago', 'em_preparo', 'pronto', 'entregue'],
-                    },
-                },
-            },
-        },
+        select: { id: true },
     });
 
     if (!comanda) {
         throw new BadRequestError('Comanda não encontrada');
     }
 
-    if (comanda.status !== 'ativa') {
-        throw new BadRequestError('Comanda não está ativa');
-    }
+    const comandaAtualizada = await comandaService.pagarManual(id, { metodoPagamento, userId: req.userId });
 
-    const total = calcularTotalComanda(comanda.pedidos);
-
-    // Atualizar todos os pedidos com método de pagamento
-    await prisma.pedido.updateMany({
-        where: {
-            comandaId: id,
-            status: {
-                in: ['pago', 'em_preparo', 'pronto', 'entregue'],
-            },
-        },
-        data: { metodoPagamento },
-    });
-
-    // Atualizar comanda para paga
-    const comandaAtualizada = await prisma.comanda.update({
-        where: { id },
-        data: {
-            formaPagamento: 'final',
-            status: 'paga',
-            totalEstimado: total,
-        },
-        include: {
-            pedidos: true,
-            mesaRelacao: true,
-        },
-    });
-
-    logger.info('Pagamento final processado', { comandaId: id, metodoPagamento, total });
+    logger.info('Pagamento final processado', { comandaId: id, metodoPagamento });
     res.json(comandaAtualizada);
 });
 

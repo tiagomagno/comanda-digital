@@ -23,6 +23,7 @@ export interface CriarPedidoDTO {
         produtoId: string;
         quantidade: number;
         observacoes?: string;
+        adicionaisIds?: string[];
     }>;
     observacoes?: string;
 }
@@ -95,7 +96,10 @@ export interface IniciarPedidoDeliveryDTO {
         email?: string;
         senha?: string;
     };
-    endereco: {
+    /** Reutilizar endereço salvo (mutuamente exclusivo com `endereco`) */
+    enderecoId?: string;
+    /** Criar novo endereço (mutuamente exclusivo com `enderecoId`) */
+    endereco?: {
         cep: string;
         logradouro: string;
         numero: string;
@@ -109,49 +113,11 @@ export interface IniciarPedidoDeliveryDTO {
         produtoId: string;
         quantidade: number;
         observacoes?: string;
+        adicionaisIds?: string[];
     }>;
     observacoes?: string;
     formaPagamento?: 'imediato' | 'final';
     taxaEntrega?: number;
-}
-
-
-export interface CriarPedidoDTO {
-    comandaCodigo: string;
-    itens: Array<{
-        produtoId: string;
-        quantidade: number;
-        observacoes?: string;
-    }>;
-    observacoes?: string;
-}
-
-export interface AtualizarStatusPedidoDTO {
-    status: string;
-}
-
-export interface CriarProdutoDTO {
-    categoriaId: string;
-    codigo?: string;
-    nome: string;
-    descricao?: string;
-    preco: number;
-    precoPromocional?: number;
-    imagemUrl?: string;
-    videoUrl?: string;
-    disponivel?: boolean;
-    destaque?: boolean;
-    ordem?: number;
-    estoqueControlado?: boolean;
-    quantidadeEstoque?: number;
-}
-
-export interface CriarCategoriaDTO {
-    estabelecimentoId: string;
-    nome: string;
-    descricao?: string;
-    destino: 'BAR' | 'COZINHA';
-    cor?: string;
-    icone?: string;
-    ordem?: number;
+    metodoPagamento?: 'pix' | 'dinheiro' | 'cartao_credito' | 'cartao_debito';
+    cupomCodigo?: string;
 }

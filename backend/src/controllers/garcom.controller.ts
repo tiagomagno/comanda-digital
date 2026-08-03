@@ -118,7 +118,11 @@ export const processarPagamento = asyncHandler(async (req: AuthRequest, res: Res
     const { id } = req.params;
     const { metodoPagamento } = req.body;
 
-    const comanda = await comandaService.atualizarStatus(id, 'paga');
+    if (!metodoPagamento) {
+        throw new BadRequestError('Método de pagamento é obrigatório');
+    }
+
+    const comanda = await comandaService.pagarManual(id, { metodoPagamento, userId: req.userId });
 
     logger.info('Pagamento processado pelo garçom', { comandaId: id, metodoPagamento });
     res.json(comanda);

@@ -22,7 +22,8 @@
         "noFallthroughCasesInSwitch": true,
         "allowSyntheticDefaultImports": true,
         "types": [
-            "node"
+            "node",
+            "jest"
         ]
     },
     "include": [
@@ -30,7 +31,6 @@
     ],
     "exclude": [
         "node_modules",
-        "dist",
-        "**/*.test.ts"
+        "dist"
     ]
 }

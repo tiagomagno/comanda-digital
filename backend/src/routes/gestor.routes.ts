@@ -10,10 +10,32 @@ import {
     regenerarQRCodeSchema,
 } from '../schemas/mesa.schema.js';
 
+import * as dashboardController from '../controllers/dashboard.controller.js';
+import { AvaliacaoController } from '../controllers/avaliacao.controller.js';
+import { RecepcaoController } from '../controllers/recepcao.controller.js';
+
+const avaliacaoController = new AvaliacaoController();
+const recepcaoController = new RecepcaoController();
+
 const router = Router();
 
 // Todas as rotas requerem autenticação e role de gestor (admin)
 router.use(authMiddleware, requireGestor);
+
+/**
+ * @route GET /api/gestor/dashboard
+ * @desc Métricas de Dashboard
+ * @access Private (Gestor)
+ */
+router.get('/dashboard', dashboardController.getDashboardStats);
+router.get('/analytics', dashboardController.getAnalytics);
+
+/**
+ * @route GET /api/gestor/avaliacoes
+ * @desc Listar todas as avaliações
+ * @access Private (Gestor)
+ */
+router.get('/avaliacoes', avaliacaoController.listarGestor);
 
 /**
  * @route GET /api/gestor/mesas
@@ -56,5 +78,23 @@ router.post('/mesas/:id/regenerate-qr', validate(regenerarQRCodeSchema), mesaCon
  * @access Private (Gestor)
  */
 router.get('/mesas/:id/qrcode', validate(buscarMesaSchema), mesaController.downloadQRCode);
+
+// -------------------------------------------------------------
+// RECEPÇÃO (Fila de Espera)
+// -------------------------------------------------------------
+
+router.post('/recepcao/fila', recepcaoController.adicionarFila);
+router.get('/recepcao/fila', recepcaoController.listarFila);
+router.patch('/recepcao/fila/:id/status', recepcaoController.atualizarStatusFila);
+router.delete('/recepcao/fila/:id', recepcaoController.removerFila);
+
+// -------------------------------------------------------------
+// RECEPÇÃO (Reservas)
+// -------------------------------------------------------------
+
+router.post('/recepcao/reservas', recepcaoController.criarReserva);
+router.get('/recepcao/reservas', recepcaoController.listarReservas);
+router.patch('/recepcao/reservas/:id/status', recepcaoController.atualizarStatusReserva);
+router.delete('/recepcao/reservas/:id', recepcaoController.removerReserva);
 
 export default router;

@@ -1,10 +1,11 @@
 import prisma from '../config/database.js';
 import QRCode from 'qrcode';
 import { CriarComandaDTO } from '../types/dto.js';
-import { NotFoundError } from '../types/errors.js';
+import { NotFoundError, BadRequestError } from '../types/errors.js';
 import { comandaInclude } from '../utils/prisma-includes.js';
 import { gerarCodigoComanda, calcularTotalComanda } from '../utils/comanda-utils.js';
 import { logger } from '../utils/logger.js';
+import { pedidoService } from './pedido.service.js';
 
 export class ComandaService {
     /**
@@ -157,6 +158,54 @@ export class ComandaService {
     async listarPedidos(comandaId: string) {
         const comanda = await this.buscarPorId(comandaId);
         return comanda.pedidos;
+    }
+
+    /**
+     * Confirma pagamento manual (dinheiro/caixa/garçom) de uma comanda inteira:
+     * libera para produção qualquer pedido ainda não liberado, registra o método
+     * de pagamento em todos os pedidos e fecha a comanda como paga.
+     */
+    async pagarManual(comandaId: string, { metodoPagamento, userId }: { metodoPagamento: string; userId?: string }) {
+        const comanda = await prisma.comanda.findUnique({
+            where: { id: comandaId },
+            include: {
+                pedidos: { where: { status: { not: 'cancelado' } } },
+            },
+        });
+
+        if (!comanda) {
+            throw new NotFoundError('Comanda não encontrada');
+        }
+
+        if (comanda.status !== 'ativa') {
+            throw new BadRequestError('Comanda não está ativa');
+        }
+
+        // Libera para produção qualquer pedido que ainda não tenha sido liberado
+        for (const pedido of comanda.pedidos) {
+            if (pedido.status === 'criado' || pedido.status === 'aguardando_pagamento') {
+                await pedidoService.atualizarStatus(pedido.id, 'pago', userId);
+            }
+        }
+
+        await prisma.pedido.updateMany({
+            where: { comandaId, status: { not: 'cancelado' } },
+            data: { metodoPagamento },
+        });
+
+        const total = calcularTotalComanda(comanda.pedidos) + Number(comanda.taxaEntrega) - Number(comanda.desconto);
+
+        const comandaAtualizada = await prisma.comanda.update({
+            where: { id: comandaId },
+            data: {
+                status: 'paga',
+                totalEstimado: total,
+            },
+            include: comandaInclude,
+        });
+
+        logger.info('Pagamento manual confirmado', { comandaId, metodoPagamento, total });
+        return comandaAtualizada;
     }
 }
 

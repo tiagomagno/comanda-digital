@@ -11,6 +11,9 @@ export const pedidoInclude = {
                     categoria: true,
                 },
             },
+            adicionais: {
+                include: { adicional: true },
+            },
         },
     },
     comanda: {
@@ -44,4 +47,13 @@ export const comandaInclude = {
 
 export const produtoInclude = {
     categoria: true,
+    adicionalGrupos: {
+        orderBy: { ordem: 'asc' as const },
+        include: {
+            opcoes: {
+                where: { disponivel: true },
+                orderBy: { ordem: 'asc' as const },
+            },
+        },
+    },
 } as const;

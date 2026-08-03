@@ -13,6 +13,7 @@ import {
     iniciarPedidoDeliverySchema,
     buscarClienteSchema,
     listarEnderecosClienteSchema,
+    iniciarPagamentoSchema,
 } from '../schemas/cliente.schema.js';
 
 const router = Router();
@@ -48,6 +49,12 @@ router.post('/pedidos', validate(criarPedidoClienteSchema), clienteController.cr
  * @desc Visualizar status da comanda
  */
 router.get('/comandas/:codigo', validate(visualizarComandaSchema), clienteController.visualizarComanda);
+
+/**
+ * @route POST /api/cliente/pagamento/iniciar
+ * @desc Iniciar cobrança real (gateway BYOG do estabelecimento) de um pedido ou da comanda inteira
+ */
+router.post('/pagamento/iniciar', validate(iniciarPagamentoSchema), clienteController.iniciarPagamento);
 
 // ===== Rotas de Delivery (clientes da rua - checkout online) =====
 

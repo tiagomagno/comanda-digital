@@ -98,6 +98,7 @@ export const iniciarPedidoDeliverySchema = z.object({
             email: z.string().email().optional().or(z.literal('')),
             senha: z.string().optional(),
         }),
+        enderecoId: z.string().uuid('ID do endereço inválido').optional(),
         endereco: z.object({
             cep: z.string().min(8, 'CEP inválido'),
             logradouro: z.string().min(2, 'Logradouro é obrigatório'),
@@ -107,7 +108,7 @@ export const iniciarPedidoDeliverySchema = z.object({
             cidade: z.string().min(1, 'Cidade é obrigatória'),
             estado: z.string().min(2, 'Estado é obrigatório'),
             referencia: z.string().optional(),
-        }),
+        }).optional(),
         itens: z.array(
             z.object({
                 produtoId: z.string().uuid('ID do produto inválido'),
@@ -118,6 +119,20 @@ export const iniciarPedidoDeliverySchema = z.object({
         observacoes: z.string().optional(),
         formaPagamento: z.enum(['imediato', 'final']).optional(),
         taxaEntrega: z.number().min(0).optional(),
+        metodoPagamento: z.enum(['pix', 'dinheiro', 'cartao_credito', 'cartao_debito']).optional(),
+    }).refine(
+        (data) => data.enderecoId || data.endereco,
+        { message: 'Informe um endereço ou selecione um endereço salvo', path: ['endereco'] }
+    ),
+});
+
+export const iniciarPagamentoSchema = z.object({
+    body: z.object({
+        comandaCodigo: z.string().min(1, 'Código da comanda é obrigatório'),
+        pedidoId: z.string().uuid('ID do pedido inválido').optional(),
+        metodo: z.enum(['pix', 'cartao'], {
+            errorMap: () => ({ message: 'Método deve ser pix ou cartao' }),
+        }),
     }),
 });
 

@@ -165,30 +165,86 @@ export class ProdutoService {
     }
 
     /**
-     * Buscar cardápio completo (público)
+     * Buscar cardápio completo (público) — inclui grupos de adicionais
      */
     async buscarCardapio(estabelecimentoId: string) {
-        const categorias = await prisma.categoria.findMany({
-            where: {
-                estabelecimentoId,
-                ativo: true,
-            },
+        return prisma.categoria.findMany({
+            where: { estabelecimentoId, ativo: true },
             include: {
                 produtos: {
-                    where: {
-                        disponivel: true,
-                    },
-                    orderBy: {
-                        ordem: 'asc',
+                    where: { disponivel: true },
+                    orderBy: { ordem: 'asc' },
+                    include: {
+                        adicionalGrupos: {
+                            orderBy: { ordem: 'asc' },
+                            include: {
+                                opcoes: {
+                                    where: { disponivel: true },
+                                    orderBy: { ordem: 'asc' },
+                                },
+                            },
+                        },
                     },
                 },
             },
-            orderBy: {
-                ordem: 'asc',
-            },
+            orderBy: { ordem: 'asc' },
         });
+    }
 
-        return categorias;
+    // ─── CRUD de Adicional Grupos ───────────────────────────────────────────
+
+    async listarAdicionalGrupos(produtoId: string) {
+        return prisma.adicionalGrupo.findMany({
+            where: { produtoId },
+            orderBy: { ordem: 'asc' },
+            include: { opcoes: { orderBy: { ordem: 'asc' } } },
+        });
+    }
+
+    async criarAdicionalGrupo(produtoId: string, data: {
+        nome: string; obrigatorio?: boolean; minSelecoes?: number; maxSelecoes?: number; ordem?: number;
+    }) {
+        await this.buscarPorId(produtoId);
+        return prisma.adicionalGrupo.create({
+            data: { produtoId, ...data },
+            include: { opcoes: true },
+        });
+    }
+
+    async atualizarAdicionalGrupo(grupoId: string, data: Partial<{
+        nome: string; obrigatorio: boolean; minSelecoes: number; maxSelecoes: number; ordem: number;
+    }>) {
+        const grupo = await prisma.adicionalGrupo.findUnique({ where: { id: grupoId } });
+        if (!grupo) throw new NotFoundError('Grupo de adicionais não encontrado');
+        return prisma.adicionalGrupo.update({ where: { id: grupoId }, data, include: { opcoes: true } });
+    }
+
+    async deletarAdicionalGrupo(grupoId: string) {
+        const grupo = await prisma.adicionalGrupo.findUnique({ where: { id: grupoId } });
+        if (!grupo) throw new NotFoundError('Grupo de adicionais não encontrado');
+        await prisma.adicionalGrupo.delete({ where: { id: grupoId } });
+    }
+
+    async criarAdicional(grupoId: string, data: {
+        nome: string; preco?: number; disponivel?: boolean; ordem?: number;
+    }) {
+        const grupo = await prisma.adicionalGrupo.findUnique({ where: { id: grupoId } });
+        if (!grupo) throw new NotFoundError('Grupo de adicionais não encontrado');
+        return prisma.adicional.create({ data: { grupoId, ...data } });
+    }
+
+    async atualizarAdicional(adicionalId: string, data: Partial<{
+        nome: string; preco: number; disponivel: boolean; ordem: number;
+    }>) {
+        const adic = await prisma.adicional.findUnique({ where: { id: adicionalId } });
+        if (!adic) throw new NotFoundError('Adicional não encontrado');
+        return prisma.adicional.update({ where: { id: adicionalId }, data });
+    }
+
+    async deletarAdicional(adicionalId: string) {
+        const adic = await prisma.adicional.findUnique({ where: { id: adicionalId } });
+        if (!adic) throw new NotFoundError('Adicional não encontrado');
+        await prisma.adicional.delete({ where: { id: adicionalId } });
     }
 }
 

@@ -1,7 +1,7 @@
 {
-  "name": "comanda-digital-backend",
+  "name": "dine-backend",
   "version": "1.0.0",
-  "description": "API do Sistema de Comandas Digitais",
+  "description": "API da Plataforma Dine",
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
@@ -13,8 +13,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
@@ -46,16 +46,21 @@
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.10.6",
     "@types/qrcode": "^1.5.6",
+    "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
+    "cross-env": "^10.1.0",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "prettier": "^3.1.1",
     "prisma": "^5.8.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.9",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }

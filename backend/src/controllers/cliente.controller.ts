@@ -25,8 +25,8 @@ export const visualizarCardapio = asyncHandler(async (req: AuthRequest, res: Res
 
 /** Criar pedido (cliente - via comanda existente) */
 export const criarPedido = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { comandaId, itens, observacoes } = req.body;
-    const pedido = await clienteService.criarPedido(comandaId, itens, observacoes);
+    const { comandaId, itens, observacoes, cupomCodigo } = req.body;
+    const pedido = await clienteService.criarPedido(comandaId, itens, observacoes, cupomCodigo);
     res.status(201).json(pedido);
 });
 
@@ -35,6 +35,13 @@ export const visualizarComanda = asyncHandler(async (req: AuthRequest, res: Resp
     const { codigo } = req.params;
     const comanda = await clienteService.visualizarComanda(codigo);
     res.json(comanda);
+});
+
+/** Iniciar cobrança real (gateway BYOG) de um pedido ou da comanda inteira */
+export const iniciarPagamento = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { comandaCodigo, pedidoId, metodo } = req.body;
+    const resultado = await clienteService.iniciarPagamento({ comandaCodigo, pedidoId, metodo });
+    res.status(201).json(resultado);
 });
 
 // ======= DELIVERY =======
